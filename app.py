@@ -9,13 +9,16 @@ from karman import db, api, jwt
 def create_app(extra_config=None) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config)
-    if extra_config:
+    if isinstance(extra_config, dict):
+        app.config.from_mapping(extra_config)
+    else:
         app.config.from_object(extra_config)
 
     db.init_app(app)
     jwt.init_app(app)
     api.init_app(app)
-    Talisman(app)
+    if not app.testing:
+        Talisman(app)
+        Migrate(app, db)
 
-    Migrate(app, db)
     return app
