@@ -1,12 +1,21 @@
 from flask import Flask
+from flask_migrate import Migrate
+from flask_talisman import Talisman
 
-app = Flask(__name__)
-
-
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
+import config
+from karman import db, api, jwt
 
 
-if __name__ == '__main__':
-    app.run()
+def create_app(extra_config=None) -> Flask:
+    app = Flask(__name__)
+    app.config.from_object(config)
+    if extra_config:
+        app.config.from_object(extra_config)
+
+    db.init_app(app)
+    jwt.init_app(app)
+    api.init_app(app)
+    Talisman(app)
+
+    Migrate(app, db)
+    return app
