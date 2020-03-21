@@ -15,7 +15,7 @@ stages:
 
 before_script:
   - pip install pipenv
-  - pipenv install
+  - pipenv install --dev --deploy
 
 lint:
   stage: test
