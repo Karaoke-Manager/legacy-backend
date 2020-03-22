@@ -4,4 +4,6 @@ This is a 'magic' file from pytest that is run automatically. It is used to make
 """
 
 # noinspection PyUnresolvedReferences
+from .data import *  # noqa, flake8 F403, F401
+# noinspection PyUnresolvedReferences
 from .fixtures import *  # noqa, flake8 F403, F401

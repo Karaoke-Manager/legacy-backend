@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, post_load, ValidationError
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from .database import db
 
@@ -8,17 +8,20 @@ class User(db.Model):
     username = db.Column(db.Text(), nullable=False, unique=True)
     password_hash = db.Column(db.Text())
 
-    class Schema(Schema):
-        id = fields.Integer()
-        username = fields.String(required=True)
-        password = fields.String()
+    def __init__(self, **kwargs):
+        if "password" in kwargs:
+            password = kwargs["password"]
+            del kwargs["password"]
+        else:
+            password = None
+        super().__init__(**kwargs)
+        if password:
+            self.set_password(password)
 
-        class Meta:
-            fields = ("id", "username")
+    def set_password(self, password: str) -> str:
+        hashed = generate_password_hash(password)
+        self.password_hash = hashed
+        return hashed
 
-        @post_load
-        def make_user(self, data, **kwargs) -> "User":
-            user = User.query.filter_by(username=data["username"]).first()
-            if not user:
-                raise ValidationError("user does not exist", data=data, **kwargs)
-            return user
+    def validate_password(self, password: str) -> bool:
+        return check_password_hash(self.password_hash, password)

@@ -1,8 +1,7 @@
-from flask_restful import Api
+from karman.rest.api import api
+from karman.rest.resource import AuthResource, SongResource
 
-from karman.rest.resources.auth import AuthResource
-from karman.rest.resources.songs import SongResource
-
-api = Api()
-api.add_resource(SongResource, '/songs/<int:id>')
 api.add_resource(AuthResource, '/login')
+# api.add_resource(UserResource, '/users/<int:id>')
+# api.add_resource(UserResource, '/users/<string:username>')
+api.add_resource(SongResource, '/songs/<int:id>')

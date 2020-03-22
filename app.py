@@ -3,7 +3,10 @@ from flask_migrate import Migrate
 from flask_talisman import Talisman
 
 import config
-from karman import db, api, jwt
+from karman import jwt
+from karman.cli import user_command
+from karman.models import db
+from karman.rest import api
 
 
 def create_app(extra_config=None) -> Flask:
@@ -20,5 +23,7 @@ def create_app(extra_config=None) -> Flask:
     if not app.testing:
         Talisman(app)
         Migrate(app, db)
+
+    app.cli.add_command(user_command)
 
     return app
