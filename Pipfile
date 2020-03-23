@@ -4,7 +4,6 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-flake8 = "*"
 flask-migrate = "*"
 pytest = "*"
 faker = "*"
@@ -23,5 +22,4 @@ python_version = "3.7"
 
 [scripts]
 serve = "flask run"
-lint = "flake8"
 test = "pytest"
