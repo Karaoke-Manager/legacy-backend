@@ -11,6 +11,7 @@ def test_create_user_with_password(cli: FlaskCliRunner):
     user: User = User.query.filter_by(username=UNUSED_USERNAME).first()
     assert user is not None
     assert user.validate_password('password')
+    assert not user.is_admin
     assert 'User Created' in result.output
 
 
@@ -27,6 +28,14 @@ def test_create_existing_user(cli: FlaskCliRunner, single_user_dataset: SingleUs
     assert data.user_exists()
     assert result.exit_code == 1
     assert "User already exists" in result.output
+
+
+def test_create_admin_user(cli: FlaskCliRunner):
+    result: Result = cli.invoke(user_command, ['create', UNUSED_USERNAME, '--no-pw', '--admin'])
+    user: User = User.query.filter_by(username=UNUSED_USERNAME).first()
+    assert user is not None
+    assert 'User Created' in result.output
+    assert user.is_admin
 
 
 def test_delete_user(cli: FlaskCliRunner, single_user_dataset: SingleUserDataset):

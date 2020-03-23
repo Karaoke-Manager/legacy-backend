@@ -1,5 +1,5 @@
 # flake8: noqa
 
-from .database import db, ModelSchema
+from .auth import *
+from .database import db
 from .song import Song
-from .user import User

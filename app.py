@@ -6,7 +6,8 @@ import config
 from karman import jwt
 from karman.cli import user_command
 from karman.models import db
-from karman.rest import api
+from karman.rest import rest_api
+from tests.data import RealDataset
 
 
 def create_app(extra_config=None) -> Flask:
@@ -19,11 +20,15 @@ def create_app(extra_config=None) -> Flask:
 
     db.init_app(app)
     jwt.init_app(app)
-    api.init_app(app)
     if not app.testing:
         Talisman(app)
         Migrate(app, db)
+    app.register_blueprint(rest_api, url_prefix="/api")
 
     app.cli.add_command(user_command)
+
+    @app.cli.command("import-test-data")
+    def import_test_data():
+        RealDataset()
 
     return app

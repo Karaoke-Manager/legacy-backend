@@ -14,9 +14,10 @@ user_command = AppGroup("user")
 @user_command.command("create")
 @click.argument("name")
 @click.option("--no-pw", "password", flag_value="")
+@click.option("--admin/--no-admin", default=False)
 @click.option("-p", "--password")
 @click.password_option("-P", "password")
-def create_user(name: str, password: str):
+def create_user(name: str, password: str, admin: bool):
     user: User = User.query.filter_by(username=name).first()
     if user:
         print(colored("User already exists", "red"), file=sys.stderr)
@@ -24,7 +25,7 @@ def create_user(name: str, password: str):
     if password == "":
         password = Faker().password()
         print("Using generated password: {}".format(password))
-    user = User(username=name, password=password)
+    user = User(username=name, password=password, is_admin=admin)
     db.session.add(user)
     db.session.commit()
     print(colored("User Created", "green"))

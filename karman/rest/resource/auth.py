@@ -1,11 +1,11 @@
 from flask import request
 from flask_jwt_extended import create_access_token
+from flask_restful import Resource
 
-from karman.rest.resource.base import RESTResource
 from karman.rest.schema import AuthSchema
 
 
-class AuthResource(RESTResource):
+class AuthResource(Resource):
     def post(self):
         (user, password) = AuthSchema().load(request.json)
         if user and user.validate_password(password):
