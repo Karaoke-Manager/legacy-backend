@@ -1,5 +1,5 @@
-# TODO: Support BatchOperations
+"""Operations used by Alembic-Data to create, update and delete objects."""
 
-from .add_object import *
-from .delete_object import *
-from .update_object import *
+from .delete_row import *
+from .insert_row import *
+from .update_row import *

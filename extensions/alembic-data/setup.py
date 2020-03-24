@@ -17,11 +17,22 @@ setup(
     description='Data Migrations for Alembic.',
     long_description=__doc__,
     packages=['alembic_data'],
-    zip_safe=True,
+    package_data={"alembic_data": ["py.typed"]},
+    zip_safe=False,
     include_package_data=True,
     platforms='any',
     install_requires=[
         'alembic'
+    ],
+    extras_require={
+        'types': [
+            'sqlalchemy-stubs'
+        ]
+    },
+    test_requirements=[
+        'pytest',
+        'pytest-pep8',
+        'pytest-cov',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

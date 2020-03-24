@@ -8,9 +8,10 @@ flask-migrate = "*"
 pytest = "*"
 faker = "*"
 termcolor = "*"
+mypy = "*"
 
 [packages]
-alembic-data = {editable = true, path = "./extensions/alembic-data"}
+alembic-data = {path = "./extensions/alembic-data", extras = ["types"], editable = true}
 flask = "*"
 flask-sqlalchemy = "*"
 flask-rest = {editable = true,path = "./extensions/flask-rest"}
