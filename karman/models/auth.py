@@ -4,10 +4,10 @@ from sqlalchemy.orm import validates
 from sqlalchemy.sql import expression
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask_data import register_object, managed_model
+from alembic_data import register_object, managed_model
 from .database import db
 
-__all__ = ["User", "Role"]
+__all__ = ["User", "Role", "register_permissions"]
 
 
 class User(db.Model):

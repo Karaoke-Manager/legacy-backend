@@ -6,7 +6,7 @@ from werkzeug import Client
 
 import tests.data
 from app import create_app
-from karman.models import db as karmen_db
+from karman.models import db as karman_db
 
 
 @pytest.fixture(scope='function')
@@ -42,10 +42,10 @@ def db(client: Client) -> SQLAlchemy:
     This fixture sets up the database for testing.
     :param client: The test client (we need to make sure that the client fixture runs first).
     """
-    karmen_db.create_all()
-    yield karmen_db
-    karmen_db.session.remove()
-    karmen_db.drop_all()
+    karman_db.create_all()
+    yield karman_db
+    karman_db.session.remove()
+    karman_db.drop_all()
 
 
 @pytest.fixture(scope='function')

@@ -10,9 +10,11 @@ faker = "*"
 termcolor = "*"
 
 [packages]
+alembic-data = {editable = true, path = "./extensions/alembic-data"}
 flask = "*"
 flask-sqlalchemy = "*"
-flask-restful = "*"
+flask-rest = {editable = true,path = "./extensions/flask-rest"}
+flask-restful = "*" # TODO: REMOVE
 marshmallow = "*"
 flask-jwt-extended = "*"
 flask-talisman = "*"

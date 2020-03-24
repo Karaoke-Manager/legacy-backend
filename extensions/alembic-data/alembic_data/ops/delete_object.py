@@ -20,7 +20,7 @@ class DeleteObjectOp(MigrateOperation):
         return operations.invoke(op)
 
     def reverse(self):
-        from flask_data.ops.add_object import AddObjectOp
+        from .add_object import AddObjectOp
         return AddObjectOp(self.table_name, **self.values)
 
 

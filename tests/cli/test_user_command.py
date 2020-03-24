@@ -1,8 +1,8 @@
 from click.testing import Result
 from flask.testing import FlaskCliRunner
 
+from karman import User
 from karman.cli import user_command
-from karman.models import User
 from tests.data import SingleUserDataset, UNUSED_USERNAME, MultiUserDataset
 
 
