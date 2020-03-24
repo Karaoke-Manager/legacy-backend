@@ -1,7 +1,7 @@
 from functools import wraps
 
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_claims
-from flask_restful import abort
+from werkzeug.exceptions import Forbidden
 
 from karman.models import User
 
@@ -30,19 +30,14 @@ def check_permission_in_request(perm: str):
     verify_jwt_in_request()
     claims = get_jwt_claims()
     if not claims['admin'] and perm not in claims['permissions']:
-        abort(403)
+        raise Forbidden("permission required: {}".format(perm))
 
 
 def check_admin_in_request():
     verify_jwt_in_request()
     claims = get_jwt_claims()
     if not claims['admin']:
-        # TODO: Unify errors somehow
-        return {
-                   "errors": [
-                       "you must be admin to perform this action"
-                   ]
-               }, 403
+        raise Forbidden("you must be admin to perform this action")
 
 
 class PermRequired:

@@ -1,25 +1,46 @@
-from flask import Blueprint
-from flask_restful import Api
+import json
 
-from karman.rest.resource import *
-
-api = Api()
-rest_api = Blueprint('rest_api', __name__)
-
-api.add_resource(AuthResource, '/login', endpoint="login")
-api.add_resource(UsersResource, '/users', endpoint="users")
-api.add_resource(UserResource, '/users/<id_or_username>', endpoint="user")
-rest_api.add_url_rule('/me', endpoint="user")
-api.add_resource(SongResource, '/songs/<int:id>')
+from flask import Blueprint, current_app
+from flask.views import View
+from werkzeug.exceptions import HTTPException, NotFound
 
 
-@rest_api.errorhandler(ValidationError)
-def handle_validation_error(error: ValidationError):
-    return api.make_response({
-        "errors": {
-            error.field_name: error.messages
-        }
-    }, 400)
+def resource(self, rule, **options):
+    def decorator(fn_or_class):
+        if isinstance(fn_or_class, type(View)):
+            endpoint = options.pop("endpoint", fn_or_class.__name__)
+            fn_or_class.endpoint = endpoint
+            self.add_url_rule(rule, view_func=fn_or_class.as_view(endpoint), **options)
+            return fn_or_class
+        else:
+            return self.route(fn_or_class)
+
+    return decorator
 
 
-api.init_app(rest_api)
+Blueprint.resource = resource
+
+api = Blueprint('api', __name__, url_prefix="/v1")
+
+
+@api.errorhandler(HTTPException)
+@api.app_errorhandler(NotFound)
+def handle_bad_request(error: HTTPException):
+    if error.response:
+        return error.response
+    cause = getattr(error, 'cause', error)
+    data = getattr(error, 'data', {})
+    content = {
+        "error": {**{
+            "code": error.code,
+            "type": cause.__class__.__name__,
+            "message": error.description
+        }, **data}
+    }
+    return current_app.response_class(
+        response=json.dumps(content),
+        status=error.code,
+    )
+
+
+from .resource import *

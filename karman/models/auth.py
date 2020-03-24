@@ -61,6 +61,10 @@ class User(db.Model):
     def has_perms(self, *perms) -> bool:
         return self.is_admin or all(perm in self.all_perms for perm in perms)
 
+    @classmethod
+    def is_perm(cls, perm):
+        return Permission.query.get(perm) is not None
+
     can = has_perms
 
     def add_perms(self, *perms):

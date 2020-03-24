@@ -1,15 +1,22 @@
-from flask import request
 from flask_jwt_extended import create_access_token
-from flask_restful import Resource
+from werkzeug.exceptions import Forbidden
 
-from karman.rest.schema import AuthSchema
+from karman.rest import api
+from karman.rest.resource.base import RESTResource
+from karman.rest.schema import AuthSchema, schema
 
 
-class AuthResource(Resource):
-    def post(self):
-        (user, password) = AuthSchema().load(request.json)
+@api.resource("/login")
+class AuthResource(RESTResource):
+
+    @schema(AuthSchema)
+    def post(self, data):
+        user = data["user"]
+        password = data["password"]
         if user and user.validate_password(password):
             access_token = create_access_token(identity=user)
-            return {"access_token": access_token}
+            return {
+                "access_token": access_token
+            }
         else:
-            return {"error_message": "username and password did not match"}, 403
+            raise Forbidden("username and password did not match")

@@ -14,8 +14,6 @@ mypy = "*"
 alembic-data = {path = "./extensions/alembic-data", extras = ["types"], editable = true}
 flask = "*"
 flask-sqlalchemy = "*"
-flask-rest = {editable = true,path = "./extensions/flask-rest"}
-flask-restful = "*" # TODO: REMOVE
 marshmallow = "*"
 flask-jwt-extended = "*"
 flask-talisman = "*"
