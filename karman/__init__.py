@@ -1,66 +1,15 @@
-from functools import wraps
+from fastapi import FastAPI
+from starlette.responses import RedirectResponse
 
-from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_claims
-from werkzeug.exceptions import Forbidden
+from karman import api
+from karman.settings import settings
 
-from karman.models import User
-
-jwt = JWTManager()
-
-
-@jwt.user_identity_loader
-def user_identity_lookup(identity: User):
-    return identity.username
+app = FastAPI(title=settings.application_name,
+              openapi_url=settings.openapi_path,
+              debug=settings.debug)
+app.include_router(api.v1, prefix="/v1")
 
 
-@jwt.user_loader_callback_loader
-def user_loader_callback(identity):
-    return User.query.filter_by(username=identity).first()
-
-
-@jwt.user_claims_loader
-def add_claims_to_access_token(user: User):
-    return {
-        "admin": user.is_admin,
-        "permissions": list(user.all_perms)
-    }
-
-
-def check_permission_in_request(perm: str):
-    verify_jwt_in_request()
-    claims = get_jwt_claims()
-    if not claims['admin'] and perm not in claims['permissions']:
-        raise Forbidden("permission required: {}".format(perm))
-
-
-def check_admin_in_request():
-    verify_jwt_in_request()
-    claims = get_jwt_claims()
-    if not claims['admin']:
-        raise Forbidden("you must be admin to perform this action")
-
-
-class PermRequired:
-    def __init__(self, perm):
-        self.perm = perm
-
-    def __call__(self, fn, *args, **kwargs):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            check_permission_in_request(self.perm)
-            return fn(*args, **kwargs)
-
-        return wrapper
-
-
-class AdminRequired:
-    def __init__(self):
-        pass
-
-    def __call__(self, fn, *args, **kwargs):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            check_admin_in_request()
-            return fn(*args, **kwargs)
-
-        return wrapper
+@app.get("/", include_in_schema=False)
+def redirect_to_docs() -> RedirectResponse:
+    return RedirectResponse("/docs")

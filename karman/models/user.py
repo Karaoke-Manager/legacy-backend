@@ -1,23 +1,26 @@
 from typing import Set
 
-from sqlalchemy.orm import validates
+from sqlalchemy import Column, Integer, Text, String, Boolean, Table, ForeignKey
+from sqlalchemy.orm import validates, relationship
 from sqlalchemy.sql import expression
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from alembic_data import register_object, managed_model
-from .database import db
+from .base import Model
 
 __all__ = ["User", "Role", "register_permissions"]
 
 
-class User(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    username = db.Column(db.Text(), nullable=False, unique=True)
-    password_hash = db.Column(db.String(94))
-    is_admin = db.Column(db.Boolean(), nullable=False, default=False, server_default=expression.false())
+class User(Model):
+    __tablename__ = "user"
 
-    permissions = db.relationship('Permission', secondary=lambda: user_permissions, lazy=True)
-    roles = db.relationship('Role', secondary=lambda: user_roles, back_populates="users", lazy=True)
+    id = Column(Integer(), primary_key=True)
+    username = Column(Text(), nullable=False, unique=True)
+    password_hash = Column(String(94))
+    is_admin = Column(Boolean(), nullable=False, default=False, server_default=expression.false())
+
+    permissions = relationship('Permission', secondary=lambda: user_permissions, lazy=True)
+    roles = relationship('Role', secondary=lambda: user_roles, back_populates="users", lazy=True)
 
     def __init__(self, **kwargs):
         password = kwargs.pop("password", None)
@@ -88,11 +91,13 @@ class User(db.Model):
         return self.username
 
 
-class Role(db.Model):
-    name = db.Column(db.Text(), primary_key=True)
+class Role(Model):
+    __tablename__ = "role"
 
-    permissions = db.relationship('Permission', secondary=lambda: role_permissions, lazy=False)
-    users = db.relationship("User", secondary=lambda: user_roles, back_populates="roles", lazy=True)
+    name = Column(Text(), primary_key=True)
+
+    permissions = relationship('Permission', secondary=lambda: role_permissions, lazy=False)
+    users = relationship("User", secondary=lambda: user_roles, back_populates="roles", lazy=True)
 
     @validates('name')
     def validate_name(self, key, value):
@@ -106,8 +111,10 @@ class Role(db.Model):
 
 
 @managed_model
-class Permission(db.Model):
-    name = db.Column(db.Text(), primary_key=True, unique=True)
+class Permission(Model):
+    __tablename__ = "permission"
+
+    name = Column(Text(), primary_key=True, unique=True)
 
     @validates('name')
     def validate_name(self, key, value):
@@ -120,17 +127,20 @@ class Permission(db.Model):
         return self.name
 
 
-user_permissions = db.Table('user_permissions',
-                            db.Column('user_id', db.Integer(), db.ForeignKey('user.id'), primary_key=True),
-                            db.Column('permission_name', db.Integer(), db.ForeignKey('permission.name'),
-                                      primary_key=True))
-user_roles = db.Table('user_roles',
-                      db.Column('user_id', db.Integer(), db.ForeignKey('user.id'), primary_key=True),
-                      db.Column('role_name', db.Integer(), db.ForeignKey('role.name'), primary_key=True))
-role_permissions = db.Table('role_permissions',
-                            db.Column('role_name', db.Integer, db.ForeignKey('role.name'), primary_key=True),
-                            db.Column('permission_name', db.Integer, db.ForeignKey('permission.name'),
-                                      primary_key=True))
+# noinspection PyTypeChecker
+user_permissions = Table('user_permissions', Model.metadata,
+                         Column('user_id', Integer(), ForeignKey('user.id'), primary_key=True),
+                         Column('permission_name', Integer(), ForeignKey('permission.name'),
+                                primary_key=True))
+# noinspection PyTypeChecker
+user_roles = Table('user_roles', Model.metadata,
+                   Column('user_id', Integer(), ForeignKey('user.id'), primary_key=True),
+                   Column('role_name', Integer(), ForeignKey('role.name'), primary_key=True))
+# noinspection PyTypeChecker
+role_permissions = Table('role_permissions', Model.metadata,
+                         Column('role_name', Integer(), ForeignKey('role.name'), primary_key=True),
+                         Column('permission_name', Integer, ForeignKey('permission.name'),
+                                primary_key=True))
 
 
 def register_permissions(*names: str):

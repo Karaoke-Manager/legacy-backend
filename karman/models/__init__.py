@@ -1,5 +1,2 @@
-# flake8: noqa
-
-from .auth import *
-from .database import db
-from .song import Song
+from .base import Model
+from .user import *

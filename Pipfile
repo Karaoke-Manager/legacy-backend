@@ -4,23 +4,28 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-flask-migrate = "*"
 pytest = "*"
 faker = "*"
 termcolor = "*"
 mypy = "*"
 
 [packages]
-alembic-data = {path = "./extensions/alembic-data", extras = ["types"], editable = true}
-flask = "*"
-flask-sqlalchemy = "*"
-marshmallow = "*"
-flask-jwt-extended = "*"
-flask-talisman = "*"
+uvicorn = "*"
+FastAPI = "*"
+Pydantic = {version = "*",extras = ["dotenv"]}
+SQLAlchemy = "*"
+alembic-data = {path = "./extensions/alembic-data",extras = ["types"],editable = true}
+alembic = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
-serve = "flask run"
+serve = "uvicorn karman:app --reload"
 test = "pytest"
+makemigrations = "alembic revision --autogenerate"
+migrate = "alembic upgrade head"
+clean = "rm -rf .mypy_cache .pytest_cache"
+
+[pipenv]
+allow_prereleases = true

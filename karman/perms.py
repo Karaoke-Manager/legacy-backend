@@ -1,4 +1,4 @@
-from karman.models.auth import register_permissions
+from karman.models.user import register_permissions
 
 MANAGE_USERS = "manage users"
 MANAGE_PERMISSIONS = "manage permissions"

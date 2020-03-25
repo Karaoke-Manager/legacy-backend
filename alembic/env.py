@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import logging
 from logging.config import fileConfig
 
@@ -7,31 +5,25 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
+# TODO: remove
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from flask import current_app
 
-config.set_main_option(
-    'sqlalchemy.url',
-    str(current_app.extensions['migrate'].db.engine.url).replace('%', '%%'))
-target_metadata = current_app.extensions['migrate'].db.metadata
+# noinspection PyUnresolvedReferences
+from karman import app
+from karman.settings import settings
+from karman.models import Model
 
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+target_metadata = Model.metadata  # Enable Autogenerate Support
+config.set_main_option('sqlalchemy.url', settings.database_url)
 
 
 def run_migrations_offline():
@@ -50,7 +42,8 @@ def run_migrations_offline():
     context.configure(
         url=url,
         target_metadata=target_metadata,
-        literal_binds=True
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
     )
 
     with context.begin_transaction():
@@ -77,7 +70,7 @@ def run_migrations_online():
 
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),
-        prefix='sqlalchemy.',
+        prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
@@ -85,8 +78,7 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            process_revision_directives=process_revision_directives,
-            **current_app.extensions['migrate'].configure_args
+            process_revision_directives=process_revision_directives
         )
 
         with context.begin_transaction():
