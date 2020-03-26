@@ -28,14 +28,14 @@ def create_access_token(user: models.User, scopes: Collection[str]) -> jwt.PyJWT
                 detail="User does not have the requested scopes."
             )
     expire = datetime.utcnow() + timedelta(minutes=settings.jwt_access_token_expire_minutes)
-    encoded_jwt = jwt.encode({
-        "sub": f"username:{user.username}",
-        "exp": expire,
-        "iss": settings.jwt_issuer,
-        "iat": datetime.utcnow(),
-        "username": user.username,
-        "scopes": scopes or list(user.all_scopes)
-    }, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    encoded_jwt = jwt.encode(TokenPayload(
+        sub=f"username:{user.username}",
+        exp=expire,
+        iss=settings.jwt_issuer,
+        iat=datetime.utcnow(),
+        username=user.username,
+        scopes=scopes or list(user.all_scopes)
+    ).dict(), settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
     return encoded_jwt
 
 
@@ -54,15 +54,15 @@ def current_user(security_scopes: SecurityScopes, db: Session = Depends(database
                                             issuer=settings.jwt_issuer,
                                             algorithms=[settings.jwt_algorithm]))
         user = db.query(User).filter(User.username == payload.username).first()
-        if user is not None:
-            return user
         for scope in security_scopes.scopes:
-            if scope not in payload.scopes:
+            if scope not in payload.scopes and not user.is_admin:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Not enough permissions",
                 )
-    except (PyJWTError, KeyError, ValidationError):
+        if user is not None:
+            return user
+    except (PyJWTError, KeyError, ValidationError) as e:
         pass
 
     raise HTTPException(

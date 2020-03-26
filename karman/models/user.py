@@ -1,15 +1,55 @@
-from typing import Collection, List, Set
+import json
+from typing import Collection, List, FrozenSet
 
-from sqlalchemy import Column, Integer, Text, String, Boolean, Table, ForeignKey
+from sqlalchemy import Column, Integer, Text, String, Boolean, Table, ForeignKey, func
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, relationship
 from sqlalchemy.sql import expression
 
-from alembic_data import managed_model
 from .base import Model
 from ..scopes import all_scopes
 from ..utils.password import hash_password
 
-__all__ = ["User", "Role", "Scope"]
+__all__ = ["User", "Role"]
+
+
+class Role(Model):
+    __tablename__ = "role"
+
+    id: int = Column(Integer(), primary_key=True)
+    name: str = Column(Text(), unique=True)
+    _scopes: str = Column("scopes", Text())
+
+    users: List["User"] = relationship("User", secondary=lambda: user_roles, back_populates="roles", lazy=True)
+
+    def __init__(self, scopes=None, **kwargs):
+        super().__init__(**kwargs)
+        self.scopes = scopes if scopes else []
+
+    @validates('name')
+    def validate_name(self, key, value):
+        return value.lower()
+
+    @hybrid_property
+    def scopes(self) -> FrozenSet[str]:
+        return frozenset(json.loads(self._scopes))
+
+    @scopes.setter
+    def scopes(self, scopes: Collection[str]):
+        for scope in scopes:
+            if scope not in all_scopes:
+                raise ValueError
+        self._scopes = json.dumps(list(scopes))
+
+    @scopes.expression
+    def scopes(cls):
+        return cls._scopes.split(',')
+
+    def __repr__(self):
+        return '<Role {}>'.format(self.name)
+
+    def __str__(self):
+        return self.name
 
 
 class User(Model):
@@ -20,48 +60,44 @@ class User(Model):
     password_hash: str = Column(String(94))
     is_admin: bool = Column(Boolean(), nullable=False, default=False, server_default=expression.false())
 
-    scopes: List["Scope"] = relationship('Scope', secondary=lambda: user_scopes, lazy=True)
-    roles: List["Role"] = relationship('Role', secondary=lambda: user_roles, back_populates="users", lazy=True)
+    _scopes: str = Column("scopes", Text())
+    roles: List[Role] = relationship('Role', secondary=lambda: user_roles, back_populates="users", lazy=True)
 
-    def __init__(self, **kwargs):
-        password = kwargs.pop("password", None)
+    def __init__(self, password: str = None, scopes: List[str] = None, **kwargs):
         super().__init__(**kwargs)
         if password:
-            self.set_password(password)
+            self.password = password
+        self.scopes = scopes if scopes else []
 
-    def set_password(self, password: str) -> str:
+    @property
+    def password(self):
+        raise AttributeError("password is not a readable property")
+
+    @password.setter
+    def password(self, password: str):
         self.password_hash = hash_password(password)
-        return self.password_hash
 
-    @property
-    def user_scopes(self) -> Set[str]:
-        return set([scope.name for scope in self.scopes])
+    @hybrid_property
+    def scopes(self) -> FrozenSet[str]:
+        return frozenset(json.loads(self._scopes))
 
-    @user_scopes.setter
-    def user_scopes(self, scopes: Collection[str]):
-        self.scopes = [Scope(name=scope) for scope in scopes if scope in all_scopes]
-
-    @property
-    def role_scopes(self) -> Set[str]:
-        return set([scope.name for role in self.roles for scope in role.scopes])
-
-    @property
-    def all_scopes(self) -> Set[str]:
-        return self.user_scopes | self.role_scopes
-
-    def has_scope(self, *scopes) -> bool:
-        return self.is_admin or all(scope in self.all_scopes for scope in scopes)
-
-    def add_scopes(self, *scopes):
+    @scopes.setter
+    def scopes(self, scopes: Collection[str]):
         for scope in scopes:
-            if scope in all_scopes:
-                if scope not in self.user_scopes:
-                    self.scopes.append(Scope(name=scope))
-            else:
+            if scope not in all_scopes:
                 raise ValueError
+        self._scopes = json.dumps(list(scopes))
 
-    def remove_scopes(self, *scopes):
-        self.scopes = [scope for scope in self.scopes if scope.name not in scopes]
+    @scopes.expression
+    def scopes(cls):
+        return func.string_split(cls._scopes, ',')
+
+    @property
+    def all_scopes(self) -> FrozenSet[str]:
+        scopes = set(self.scopes)
+        for role in self.roles:
+            scopes.update(role.scopes)
+        return frozenset(scopes)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -70,50 +106,6 @@ class User(Model):
         return self.username
 
 
-class Role(Model):
-    __tablename__ = "role"
-
-    name = Column(Text(), primary_key=True)
-
-    scopes = relationship('Scope', secondary=lambda: role_scopes, lazy=False)
-    users = relationship("User", secondary=lambda: user_roles, back_populates="roles", lazy=True)
-
-    @validates('name')
-    def validate_name(self, key, value):
-        return value.lower()
-
-    def __repr__(self):
-        return '<Role {}>'.format(self.name)
-
-    def __str__(self):
-        return self.name
-
-
-@managed_model
-class Scope(Model):
-    __tablename__ = "scope"
-
-    name = Column(Text(), primary_key=True, unique=True)
-
-    @validates('name')
-    def validate_name(self, key, value):
-        return value.lower()
-
-    def __repr__(self):
-        return '<Scope {}>'.format(self.name)
-
-    def __str__(self):
-        return self.name
-
-
-user_scopes = Table('user_scopes', Model.metadata,
-                    Column('user_id', Integer(), ForeignKey('user.id'), primary_key=True),
-                    Column('scope_name', Integer(), ForeignKey('scope.name'),
-                           primary_key=True))
 user_roles = Table('user_roles', Model.metadata,
                    Column('user_id', Integer(), ForeignKey('user.id'), primary_key=True),
-                   Column('role_name', Integer(), ForeignKey('role.name'), primary_key=True))
-role_scopes = Table('role_scopes', Model.metadata,
-                    Column('role_name', Integer(), ForeignKey('role.name'), primary_key=True),
-                    Column('scope_name', Integer, ForeignKey('scope.name'),
-                           primary_key=True))
+                   Column('role_id', Integer(), ForeignKey('role.id'), primary_key=True))

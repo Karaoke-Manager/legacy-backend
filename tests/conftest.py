@@ -1,9 +1,43 @@
-"""
-This is a 'magic' file from pytest that is run automatically. It is used to make sure that fixtures are available for
- all test cases.
-"""
+import pytest
+from requests import Response
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
+from starlette.testclient import TestClient
 
-# noinspection PyUnresolvedReferences
-from .data import *  # noqa, flake8 F403, F401
-# noinspection PyUnresolvedReferences
-from .fixtures import *  # noqa, flake8 F403, F401
+import karman
+from karman import models, settings
+from karman.database import get_db_engine, make_session
+from tests.data import Dataset
+
+
+@pytest.fixture(scope='function')
+def client() -> TestClient:
+    client = TestClient(karman.app)
+    return client
+
+
+@pytest.fixture(scope='function', autouse=True)
+def db() -> Session:
+    settings.database_url = "sqlite://"
+    models.Model.metadata.bind = get_db_engine(poolclass=StaticPool)
+    models.Model.metadata.create_all()
+    session = make_session()
+    yield session
+    session.close()
+    models.Model.metadata.drop_all()
+
+
+@pytest.fixture(scope='function')
+def dataset(client: TestClient, db: Session) -> Dataset:
+    dataset = Dataset()
+    dataset.load(db)
+    return dataset
+
+
+@pytest.fixture(name="login:admin", scope="function")
+def login_admin(client: TestClient, dataset: Dataset):
+    response: Response = client.post("/v1/login", data={
+        "username": dataset.admin.username,
+        "password": dataset.ADMIN_PASSWORD
+    })
+    client.headers["Authorization"] = f"Bearer {response.json()['accessToken']}"

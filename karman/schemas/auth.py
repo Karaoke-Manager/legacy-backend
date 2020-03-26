@@ -8,8 +8,10 @@ from karman.schemas.base import BaseSchema
 
 class TokenPayload(BaseSchema):
     sub: str
+    exp: datetime
+    iss: str
+    iat: datetime
     username: str
-    expire: datetime
     scopes: List[str]
 
 
