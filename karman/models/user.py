@@ -1,88 +1,67 @@
-from typing import Set
+from typing import Collection, List, Set
 
 from sqlalchemy import Column, Integer, Text, String, Boolean, Table, ForeignKey
 from sqlalchemy.orm import validates, relationship
 from sqlalchemy.sql import expression
-from werkzeug.security import generate_password_hash, check_password_hash
 
-from alembic_data import register_object, managed_model
+from alembic_data import managed_model
 from .base import Model
+from ..scopes import all_scopes
+from ..utils.password import hash_password
 
-__all__ = ["User", "Role", "register_permissions"]
+__all__ = ["User", "Role", "Scope"]
 
 
 class User(Model):
     __tablename__ = "user"
 
-    id = Column(Integer(), primary_key=True)
-    username = Column(Text(), nullable=False, unique=True)
-    password_hash = Column(String(94))
-    is_admin = Column(Boolean(), nullable=False, default=False, server_default=expression.false())
+    id: int = Column(Integer(), primary_key=True)
+    username: str = Column(Text(), nullable=False, unique=True)
+    password_hash: str = Column(String(94))
+    is_admin: bool = Column(Boolean(), nullable=False, default=False, server_default=expression.false())
 
-    permissions = relationship('Permission', secondary=lambda: user_permissions, lazy=True)
-    roles = relationship('Role', secondary=lambda: user_roles, back_populates="users", lazy=True)
+    scopes: List["Scope"] = relationship('Scope', secondary=lambda: user_scopes, lazy=True)
+    roles: List["Role"] = relationship('Role', secondary=lambda: user_roles, back_populates="users", lazy=True)
 
     def __init__(self, **kwargs):
         password = kwargs.pop("password", None)
-        perms = kwargs.pop("perms", [])
         super().__init__(**kwargs)
         if password:
             self.set_password(password)
-        if perms:
-            self.add_perms(*perms)
 
     def set_password(self, password: str) -> str:
-        hashed = generate_password_hash(password)
-        self.password_hash = hashed
-        return hashed
-
-    def validate_password(self, password: str) -> bool:
-        return check_password_hash(self.password_hash, password)
-
-    def all_roles(self, as_objects=False):
-        if as_objects:
-            return self.roles
-        else:
-            return [role.name for role in self.roles]
+        self.password_hash = hash_password(password)
+        return self.password_hash
 
     @property
-    def user_perms(self) -> Set[str]:
-        return set([permission.name for permission in self.permissions])
+    def user_scopes(self) -> Set[str]:
+        return set([scope.name for scope in self.scopes])
 
-    @user_perms.setter
-    def user_perms(self, perms: Set[str]):
-        self.permissions = list(Permission.query.filter(Permission.name.in_(perms)))
-
-    @property
-    def role_perms(self) -> Set[str]:
-        return set([permission.name for role in self.roles for permission in role.permissions])
+    @user_scopes.setter
+    def user_scopes(self, scopes: Collection[str]):
+        self.scopes = [Scope(name=scope) for scope in scopes if scope in all_scopes]
 
     @property
-    def all_perms(self) -> Set[str]:
-        return self.user_perms | self.role_perms
+    def role_scopes(self) -> Set[str]:
+        return set([scope.name for role in self.roles for scope in role.scopes])
 
-    def has_perms(self, *perms) -> bool:
-        return self.is_admin or all(perm in self.all_perms for perm in perms)
+    @property
+    def all_scopes(self) -> Set[str]:
+        return self.user_scopes | self.role_scopes
 
-    @classmethod
-    def is_perm(cls, perm):
-        return Permission.query.get(perm) is not None
+    def has_scope(self, *scopes) -> bool:
+        return self.is_admin or all(scope in self.all_scopes for scope in scopes)
 
-    can = has_perms
+    def add_scopes(self, *scopes):
+        for scope in scopes:
+            if scope in all_scopes:
+                if scope not in self.user_scopes:
+                    self.scopes.append(Scope(name=scope))
+            else:
+                raise ValueError
 
-    def add_perms(self, *perms):
-        for perm in perms:
-            if perm not in self.user_perms:
-                permission = Permission.query.get(perm)
-                if permission is None:
-                    pass  # FIXME: Raise error?
-                self.permissions.append(Permission.query.get(perm))
-
-    def remove_perms(self, *perms):
-        self.permissions = [permission for permission in self.permissions if permission.name not in perms]
-
-    def clear_perms(self):
-        self.permissions = []
+    def remove_scopes(self, *scopes):
+        self.scopes = [scope for scope in self.scopes if scope.name not in scopes]
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -96,7 +75,7 @@ class Role(Model):
 
     name = Column(Text(), primary_key=True)
 
-    permissions = relationship('Permission', secondary=lambda: role_permissions, lazy=False)
+    scopes = relationship('Scope', secondary=lambda: role_scopes, lazy=False)
     users = relationship("User", secondary=lambda: user_roles, back_populates="roles", lazy=True)
 
     @validates('name')
@@ -111,8 +90,8 @@ class Role(Model):
 
 
 @managed_model
-class Permission(Model):
-    __tablename__ = "permission"
+class Scope(Model):
+    __tablename__ = "scope"
 
     name = Column(Text(), primary_key=True, unique=True)
 
@@ -121,28 +100,20 @@ class Permission(Model):
         return value.lower()
 
     def __repr__(self):
-        return '<Permission {}>'.format(self.name)
+        return '<Scope {}>'.format(self.name)
 
     def __str__(self):
         return self.name
 
 
-# noinspection PyTypeChecker
-user_permissions = Table('user_permissions', Model.metadata,
-                         Column('user_id', Integer(), ForeignKey('user.id'), primary_key=True),
-                         Column('permission_name', Integer(), ForeignKey('permission.name'),
-                                primary_key=True))
-# noinspection PyTypeChecker
+user_scopes = Table('user_scopes', Model.metadata,
+                    Column('user_id', Integer(), ForeignKey('user.id'), primary_key=True),
+                    Column('scope_name', Integer(), ForeignKey('scope.name'),
+                           primary_key=True))
 user_roles = Table('user_roles', Model.metadata,
                    Column('user_id', Integer(), ForeignKey('user.id'), primary_key=True),
                    Column('role_name', Integer(), ForeignKey('role.name'), primary_key=True))
-# noinspection PyTypeChecker
-role_permissions = Table('role_permissions', Model.metadata,
-                         Column('role_name', Integer(), ForeignKey('role.name'), primary_key=True),
-                         Column('permission_name', Integer, ForeignKey('permission.name'),
-                                primary_key=True))
-
-
-def register_permissions(*names: str):
-    for name in names:
-        register_object(Permission, name=name)
+role_scopes = Table('role_scopes', Model.metadata,
+                    Column('role_name', Integer(), ForeignKey('role.name'), primary_key=True),
+                    Column('scope_name', Integer, ForeignKey('scope.name'),
+                           primary_key=True))

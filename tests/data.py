@@ -1,37 +1,48 @@
-from karman.models import User, db
+from sqlalchemy.orm import Session
+
+from karman import models
+from karman.models import User
 
 UNUSED_USERNAME = "absent"
 
 
 class TestDataset:
-    def __init__(self):
-        db.session.commit()
+    def user_count(self, db: Session):
+        return db.query(User).count()
 
-    def user_count(self):
-        return User.query.count()
+    def load(self, db: Session):
+        db.commit()
 
 
 class SingleUserDataset(TestDataset):
     def __init__(self):
-        self.user = User.get_or_create(search="username", username="user", password="password1")
-        super().__init__()
+        self.user = models.User(username="user", password="password1")
 
-    def user_exists(self):
-        return User.query.filter_by(id=self.user.id).count() == 1
+    def load(self, db: Session):
+        db.add(self.user)
+        super().load(db)
+
+    def user_exists(self, db: Session):
+        return db.query(User).get(self.user.id) is not None
 
 
 class MultiUserDataset(TestDataset):
     def __init__(self):
-        self.user1 = User.get_or_create(search="username", username="user1", password="password1")
-        self.user2 = User.get_or_create(search="username", username="user2", password="password1")
-        super().__init__()
+        self.users = [
+            User(username="user1", password="password1"),
+            User(username="user2", password="password1")
+        ]
 
-    @property
-    def users(self):
-        return [self.user1, self.user2]
+    def load(self, db: Session):
+        for user in self.users:
+            db.add(user)
+        super().load(db)
 
 
 class RealDataset(TestDataset):
     def __init__(self):
-        self.admin = User.get_or_create(search="username", username="admin", password="password", is_admin=True)
-        super().__init__()
+        self.admin = User(username="admin", password="password", is_admin=True)
+
+    def load(self, db: Session):
+        db.add(self.admin)
+        super().load(db)

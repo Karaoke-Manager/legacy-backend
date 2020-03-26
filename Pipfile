@@ -5,17 +5,20 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
+requests = "*"
 faker = "*"
-termcolor = "*"
 mypy = "*"
 
 [packages]
 uvicorn = "*"
 FastAPI = "*"
+python-multipart = "*"
 Pydantic = {version = "*",extras = ["dotenv"]}
 SQLAlchemy = "*"
+Alembic = "*"
 alembic-data = {path = "./extensions/alembic-data",extras = ["types"],editable = true}
-alembic = "*"
+PyJWT = "*"
+passlib = {extras = ["bcrypt"],version = "*"}
 
 [requires]
 python_version = "3.7"
@@ -26,6 +29,3 @@ test = "pytest"
 makemigrations = "alembic revision --autogenerate"
 migrate = "alembic upgrade head"
 clean = "rm -rf .mypy_cache .pytest_cache"
-
-[pipenv]
-allow_prereleases = true

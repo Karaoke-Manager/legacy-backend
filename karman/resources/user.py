@@ -1,15 +1,10 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from karman import schemas, models
-from karman.database import db
+from fastapi import APIRouter
 
 router = APIRouter()
 
-
-@router.get(
-    "/",
-    response_model=schemas.User
-)
-def list_users(db: Session = Depends(db)):
-    return db.query(models.User).all()
+# @router.get(
+#    "/",
+#    response_model=schemas.User
+# )
+# def list_users(db: Session = Depends(database), user: models.User = Depends(current_user)):
+#    return db.query(models.User).all()
