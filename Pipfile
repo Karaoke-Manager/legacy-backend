@@ -5,6 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
+pytest-xdist = "*"
 requests = "*"
 faker = "*"
 mypy = "*"
@@ -16,7 +17,6 @@ python-multipart = "*"
 Pydantic = {version = "*",extras = ["dotenv"]}
 SQLAlchemy = "*"
 Alembic = "*"
-alembic-data = {path = "./extensions/alembic-data",extras = ["types"],editable = true}
 PyJWT = "*"
 passlib = {extras = ["bcrypt"],version = "*"}
 
@@ -25,7 +25,7 @@ python_version = "3.7"
 
 [scripts]
 serve = "uvicorn karman:app --reload"
-test = "pytest"
+test = "pytest -n 4"
 makemigrations = "alembic revision --autogenerate"
 migrate = "alembic upgrade head"
 clean = "rm -rf .mypy_cache .pytest_cache"
