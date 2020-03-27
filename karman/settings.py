@@ -1,3 +1,5 @@
+import sys
+
 from pydantic import BaseSettings
 
 
@@ -15,7 +17,7 @@ class Settings(BaseSettings):
 
     class Config:
         case_sensitive = False
-        env_file = ".env"
+        env_file = ".env.testing" if "pytest" in sys.modules else ".env"
         env_prefix = ""
 
 

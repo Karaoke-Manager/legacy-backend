@@ -5,7 +5,7 @@ from sqlalchemy.pool import StaticPool
 from starlette.testclient import TestClient
 
 import karman
-from karman import models, settings
+from karman import models
 from karman.database import get_db_engine, make_session
 from tests.data import Dataset
 
@@ -18,7 +18,6 @@ def client() -> TestClient:
 
 @pytest.fixture(scope='function', autouse=True)
 def db() -> Session:
-    settings.database_url = "sqlite://"
     models.Model.metadata.bind = get_db_engine(poolclass=StaticPool)
     models.Model.metadata.create_all()
     session = make_session()
