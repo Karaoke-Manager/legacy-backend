@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     application_name: str
     openapi_path: str
     debug: bool
+    test: bool = "pytest" in sys.modules
 
     database_url: str
 

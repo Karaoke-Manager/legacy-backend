@@ -12,22 +12,6 @@ from karman.utils import get_or_404
 router = APIRouter()
 
 
-@router.get(
-    "/",
-    response_model=List[schemas.Role]
-)
-def list_roles(db: Session = Depends(database)):
-    return db.query(models.Role).all()
-
-
-@router.get(
-    "/{role_id}",
-    response_model=schemas.Role
-)
-def get_role(role_id: int, db: Session = Depends(database)):
-    return get_or_404(db, models.Role, role_id)
-
-
 @router.post(
     '/',
     response_model=schemas.Role,
@@ -46,6 +30,22 @@ def add_role(data: schemas.CreateRole, db: Session = Depends(database)):
         return role
     except IntegrityError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Role {data.name} does already exist.")
+
+
+@router.get(
+    "/",
+    response_model=List[schemas.Role]
+)
+def list_roles(db: Session = Depends(database)):
+    return db.query(models.Role).all()
+
+
+@router.get(
+    "/{role_id}",
+    response_model=schemas.Role
+)
+def get_role(role_id: int, db: Session = Depends(database)):
+    return get_or_404(db, models.Role, role_id)
 
 
 @router.put(
@@ -82,3 +82,14 @@ def patch_role(role_id: int, data: schemas.PatchRole, db: Session = Depends(data
         return role
     except IntegrityError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Role {data.name} does already exist.")
+
+
+@router.delete(
+    "/{role_id}",
+    response_model=schemas.Role
+)
+def delete_role(role_id: int, db: Session = Depends(database)):
+    role: models.Role = get_or_404(db, models.Role, role_id)
+    db.delete(role)
+    db.commit()
+    return role

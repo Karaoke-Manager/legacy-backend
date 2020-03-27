@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from starlette.status import *
 from starlette.testclient import TestClient
 
-from karman import schemas, all_scopes
+from karman import schemas, all_scopes, models
 from tests.data import Dataset
 
 
@@ -113,3 +113,13 @@ def test_patch_role_name_and_scopes(client: TestClient, db: Session, dataset: Da
     assert response.status_code == HTTP_200_OK
     assert dataset.manager_role.name == dataset.UNUSED_ROLE
     assert dataset.manager_role.scopes == all_scopes.keys()
+
+
+@pytest.mark.usefixtures("login:admin")
+def test_delete_role(client: TestClient, db: Session, dataset: Dataset):
+    schema = schemas.Role.from_orm(dataset.manager_role)
+    response = client.delete(f"/v1/roles/{dataset.manager_role.id}")
+    db.expire(dataset.manager_role)
+    assert response.status_code == HTTP_200_OK
+    assert schemas.Role(**response.json()) == schema
+    assert db.query(models.Role).get(schema.id) is None
