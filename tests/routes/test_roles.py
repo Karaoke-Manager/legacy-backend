@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from starlette.status import *
 from starlette.testclient import TestClient
 
+from data import Dataset
 from karman import schemas, all_scopes, models
-from tests.data import Dataset
 
 
 def equal_roles(schema, db):

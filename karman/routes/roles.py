@@ -6,8 +6,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from karman import schemas, models
-from karman.database import database
-from karman.utils import get_or_404
+from karman.utils import get_or_404, database
 
 router = APIRouter()
 

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
+from data import Dataset
+from karman import Model
+from karman import app_config
+from karman import make_session
 
-from karman.database import get_db_engine, make_session
-from karman.models import Model
-from tests.data import Dataset
-
-Model.metadata.bind = get_db_engine()
-Model.metadata.drop_all()
-Model.metadata.create_all()
+Model.metadata.drop_all(app_config.db_engine)
+Model.metadata.create_all(app_config.db_engine)
 Dataset().load(make_session())

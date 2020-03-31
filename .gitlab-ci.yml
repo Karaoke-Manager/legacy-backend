@@ -1,5 +1,8 @@
 image: python
 
+# TODO: Trigger Docker Pipeline
+# TODO: Build API Documentation
+
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PIPENV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pipenv"
@@ -20,4 +23,4 @@ before_script:
 test:
   stage: test
   script:
-    - pipenv run test -q
+    - pipenv run test:unit -q

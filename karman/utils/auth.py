@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from typing import Collection
 
 import jwt
@@ -9,13 +8,13 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from karman import models
-from karman.database import database
 from karman.models import User
-from karman.schemas import TokenPayload
 from karman.scopes import all_scopes
-from karman.settings import settings
+from .database import database
 
 __all__ = ["create_access_token", "current_user", "admin_user", "required_scopes"]
+
+from ..helpers.crypto import create_jwt_token, TokenPayload, verify_jwt_token
 
 
 def create_access_token(user: models.User, scopes: Collection[str]) -> jwt.PyJWT:
@@ -27,15 +26,8 @@ def create_access_token(user: models.User, scopes: Collection[str]) -> jwt.PyJWT
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User does not have the requested scopes."
             )
-    expire = datetime.utcnow() + timedelta(minutes=settings.jwt_access_token_expire_minutes)
-    encoded_jwt = jwt.encode(TokenPayload(
-        sub=f"username:{user.username}",
-        exp=expire,
-        iss=settings.jwt_issuer,
-        iat=datetime.utcnow(),
-        username=user.username,
-        scopes=scopes or list(user.all_scopes)
-    ).dict(), settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+    encoded_jwt = create_jwt_token(TokenPayload(username=user.username, scopes=scopes or list(user.all_scopes)))
     return encoded_jwt
 
 
@@ -50,9 +42,7 @@ def current_user(security_scopes: SecurityScopes, db: Session = Depends(database
     else:
         authenticate_value = f"Bearer"
     try:
-        payload = TokenPayload(**jwt.decode(token, settings.jwt_secret_key,
-                                            issuer=settings.jwt_issuer,
-                                            algorithms=[settings.jwt_algorithm]))
+        payload = verify_jwt_token(token)
         user = db.query(User).filter(User.username == payload.username).first()
         for scope in security_scopes.scopes:
             if scope not in payload.scopes and not user.is_admin:
@@ -62,7 +52,8 @@ def current_user(security_scopes: SecurityScopes, db: Session = Depends(database
                 )
         if user is not None:
             return user
-    except (PyJWTError, KeyError, ValidationError) as e:
+    except (PyJWTError, KeyError, ValidationError):
+        # Invalid JWT
         pass
 
     raise HTTPException(

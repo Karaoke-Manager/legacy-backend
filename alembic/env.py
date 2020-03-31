@@ -5,25 +5,18 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-config = context.config
+alembic_config = context.config
 
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+fileConfig(alembic_config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
-# TODO: remove
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-
 # noinspection PyUnresolvedReferences
-from karman import app
-from karman.settings import settings
+from karman import app, app_config
 from karman.models import Model
 
 target_metadata = Model.metadata  # Enable Autogenerate Support
-config.set_main_option('sqlalchemy.url', settings.database_url)
+alembic_config.set_main_option('sqlalchemy.url', app_config.database.url)
 
 
 def run_migrations_offline():
@@ -38,7 +31,7 @@ def run_migrations_offline():
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = alembic_config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -62,14 +55,14 @@ def run_migrations_online():
     # when there are no changes to the schema
     # reference: http://alembic.zzzcomputing.com/en/latest/cookbook.html
     def process_revision_directives(context, revision, directives):
-        if getattr(config.cmd_opts, 'autogenerate', False):
+        if getattr(alembic_config.cmd_opts, 'autogenerate', False):
             script = directives[0]
             if script.upgrade_ops.is_empty():
                 directives[:] = []
                 logger.info('No changes in schema detected.')
 
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        alembic_config.get_section(alembic_config.config_ini_section),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

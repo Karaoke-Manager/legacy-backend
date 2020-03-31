@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from karman import models
-from karman.utils import verify_password_hash
+from karman.helpers.crypto import verify_password_hash
 
 __all__ = ["authenticate_user"]
 

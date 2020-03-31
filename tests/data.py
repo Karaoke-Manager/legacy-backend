@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from karman.models import User, Role
+from karman.models import Role, User
 from karman.scopes import MANAGE_LIBRARY
 
 

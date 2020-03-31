@@ -3,9 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from karman import schemas
-from karman.database import database
-from karman.utils import create_access_token
-from karman.utils.user import authenticate_user
+from karman.utils import create_access_token, database, authenticate_user
 
 router = APIRouter()
 

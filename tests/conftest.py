@@ -1,33 +1,33 @@
 import pytest
 from requests import Response
-from sqlalchemy.orm import Session
-from sqlalchemy.pool import StaticPool
+from sqlalchemy import orm
 from starlette.testclient import TestClient
 
-import karman
-from karman import models
-from karman.database import get_db_engine, make_session
-from tests.data import Dataset
+from data import Dataset
+from karman import models, app
+from karman.config import app_config
+from karman.utils import db_engine, Session
+
+
+@pytest.fixture(scope='function', autouse=True)
+def db() -> orm.Session:
+    app_config.database = app_config.test.database
+    app_config.redis = app_config.test.redis
+    models.Model.metadata.create_all(db_engine)
+    session = Session()
+    yield session
+    session.close()
+    models.Model.metadata.drop_all(db_engine)
 
 
 @pytest.fixture(scope='function')
 def client() -> TestClient:
-    client = TestClient(karman.app)
+    client = TestClient(app)
     return client
 
 
-@pytest.fixture(scope='function', autouse=True)
-def db() -> Session:
-    models.Model.metadata.bind = get_db_engine(poolclass=StaticPool)
-    models.Model.metadata.create_all()
-    session = make_session()
-    yield session
-    session.close()
-    models.Model.metadata.drop_all()
-
-
 @pytest.fixture(scope='function')
-def dataset(client: TestClient, db: Session) -> Dataset:
+def dataset(client: TestClient, db: orm.Session) -> Dataset:
     dataset = Dataset()
     dataset.load(db)
     return dataset

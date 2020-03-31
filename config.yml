@@ -1,0 +1,37 @@
+# WARNING: Do not run in production with debug=true
+debug: true
+
+redis: redis://redis@localhost:6379
+database: sqlite:///./db.sqlite
+
+test:
+  redis: redis://redis@localhost:6379/test
+  database: sqlite:///./db-test.sqlite
+
+jwt:
+  # WARNING: Change this
+  secret_key: 09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
+  issuer: Karman
+
+storage:
+  library: ./data/songs
+  user_songs: ./data/user-songs
+  imports: ./data/imports
+  uploads: ./data/uploads
+
+uploads:
+  - type: karman.config.tusd.Tusd
+    url: http://localhost:1080/files
+    hook_route: /tusd
+    path_prefix: /srv/tusd-data
+
+middleware:
+  - class: karman.app.middleware.CustomHeadersMiddleware
+    add_headers:
+      X-Content-Type-Options: nosniff
+  - class: starlette.middleware.trustedhost.TrustedHostMiddleware
+    allowed_hosts: ["*"]
+
+# TODO: Document CORS (via CORSMiddleware)
+# TODO: Possibly add MessagePack
+# https://github.com/florimondmanca/msgpack-asgi

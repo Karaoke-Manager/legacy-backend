@@ -6,9 +6,9 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates, relationship
 from sqlalchemy.sql import expression
 
+from karman.helpers.crypto import hash_password
 from .base import Model
 from ..scopes import all_scopes
-from ..utils.password import hash_password
 
 __all__ = ["User", "Role"]
 
@@ -62,6 +62,8 @@ class User(Model):
 
     _scopes: str = Column("scopes", Text())
     roles: List[Role] = relationship('Role', secondary=lambda: user_roles, back_populates="users", lazy=True)
+
+    imports = relationship("Import", back_populates="user")
 
     def __init__(self, password: str = None, scopes: List[str] = None, **kwargs):
         super().__init__(**kwargs)

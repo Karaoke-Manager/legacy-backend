@@ -6,11 +6,15 @@ verify_ssl = true
 [dev-packages]
 pytest = "*"
 pytest-xdist = "*"
+pytest-pep8 = "*"
+pytest-cov = "*"
 requests = "*"
 faker = "*"
 mypy = "*"
+tuspy = "*"
 
 [packages]
+# TODO: Sort Packages
 uvicorn = "*"
 FastAPI = "*"
 python-multipart = "*"
@@ -19,13 +23,24 @@ SQLAlchemy = "*"
 Alembic = "*"
 PyJWT = "*"
 passlib = {extras = ["bcrypt"],version = "*"}
+fs = "*"
+funcy = "*"
+aiohttp = {extras = ["speedups"],version = "*"}
+FastAPI-Helpers = {path = "./packages/fastapi-helpers",editable = true}
+aioredis = "*"
+PyYAML = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
 serve = "uvicorn karman:app --reload"
-test = "pytest -n 4"
-makemigrations = "alembic revision --autogenerate"
-migrate = "alembic upgrade head"
+test = "pipenv run test:unit && pipenv run test:pep8"
+"test:unit" = "pytest"
+# TODO: Test pep8 tests
+"test:pep8" = "pytest --pep8"
+# TODO: Test coverage tests
+"test:coverage" = "pytest --cov=karman"
+"migrate:make" = "alembic revision --autogenerate"
+"migrate:apply" = "alembic upgrade head"
 clean = "rm -rf .mypy_cache .pytest_cache"

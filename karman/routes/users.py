@@ -1,11 +1,11 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from karman import schemas, models
-from karman.database import Session, database
 from karman.scopes import MANAGE_USERS
-from karman.utils import required_scopes
+from karman.utils import required_scopes, database
 
 router = APIRouter()
 
