@@ -42,7 +42,7 @@ class TokenPayload(BaseSchema):
         return iat or datetime.utcnow()
 
 
-def create_jwt_token(payload: TokenPayload) -> str:
+def create_jwt_token(payload: TokenPayload) -> jwt.PyJWT:
     return jwt.encode(payload.dict(), app_config.jwt.secret_key, algorithm=app_config.jwt.algorithm)
 
 

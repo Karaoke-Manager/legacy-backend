@@ -5,30 +5,28 @@ verify_ssl = true
 
 [dev-packages]
 pytest = "*"
+pytest-asyncio = "*"
 pytest-xdist = "*"
-pytest-pep8 = "*"
-pytest-cov = "*"
 requests = "*"
-faker = "*"
+typer = "*"
 mypy = "*"
-tuspy = "*"
+motor-stubs = {path = "./packages/motor-stubs",editable = true}
+asgi-lifespan = "*"
+httpx = "*"
 
 [packages]
-# TODO: Sort Packages
 uvicorn = "*"
 FastAPI = "*"
+Pydantic = "*"
 python-multipart = "*"
-Pydantic = {version = "*",extras = ["dotenv"]}
-SQLAlchemy = "*"
-Alembic = "*"
 PyJWT = "*"
 passlib = {extras = ["bcrypt"],version = "*"}
-fs = "*"
-funcy = "*"
-aiohttp = {extras = ["speedups"],version = "*"}
-FastAPI-Helpers = {path = "./packages/fastapi-helpers",editable = true}
 aioredis = "*"
+motor = "*"
+funcy = "*"
+FastAPI-Helpers = {path = "./packages/fastapi-helpers",editable = true}
 PyYAML = "*"
+fs = "*"
 
 [requires]
 python_version = "3.7"
@@ -36,7 +34,7 @@ python_version = "3.7"
 [scripts]
 serve = "uvicorn karman:app --reload"
 test = "pipenv run test:unit && pipenv run test:pep8"
-"test:unit" = "pytest"
+"test:unit" = "pytest -n auto"
 # TODO: Test pep8 tests
 "test:pep8" = "pytest --pep8"
 # TODO: Test coverage tests

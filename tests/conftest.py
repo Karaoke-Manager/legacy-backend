@@ -1,41 +1,66 @@
 import pytest
-from requests import Response
-from sqlalchemy import orm
-from starlette.testclient import TestClient
+from aioredis import Redis
+from asgi_lifespan import LifespanManager
+from fastapi import FastAPI
+from httpx import AsyncClient
+from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorClient
 
+import karman
 from data import Dataset
-from karman import models, app
 from karman.config import app_config
-from karman.utils import db_engine, Session
+from karman.utils import get_db, aioredis, get_redis
 
 
 @pytest.fixture(scope='function', autouse=True)
-def db() -> orm.Session:
-    app_config.database = app_config.test.database
-    app_config.redis = app_config.test.redis
-    models.Model.metadata.create_all(db_engine)
-    session = Session()
-    yield session
-    session.close()
-    models.Model.metadata.drop_all(db_engine)
+async def db(worker_id: str) -> AsyncIOMotorDatabase:
+    mongo = AsyncIOMotorClient(app_config.test.mongo or app_config.mongodb)
+    db_name = f"{app_config.test.db_prefix}{worker_id}"
+    await mongo.drop_database(db_name)
+    yield mongo[db_name]
+    await mongo.drop_database(db_name)
+    mongo.close()
+
+
+@pytest.fixture(scope='function', autouse=True)
+async def redis(worker_id: str) -> Redis:
+    index = int(worker_id[2:]) + app_config.test.redis_offset
+    pool = await aioredis.create_redis_pool(app_config.test.redis or app_config.redis, db=index)
+    yield pool
+    await pool.flushdb()
+    pool.close()
+    await pool.wait_closed()
 
 
 @pytest.fixture(scope='function')
-def client() -> TestClient:
-    client = TestClient(app)
-    return client
+async def app(db: AsyncIOMotorDatabase, redis: Redis) -> FastAPI:
+    async def get_test_db():
+        yield db
+
+    async def get_test_redis():
+        yield redis
+
+    karman.app.dependency_overrides[get_db] = get_test_db
+    karman.app.dependency_overrides[get_redis] = get_test_redis
+    async with LifespanManager(karman.app):
+        yield karman.app
+
+
+@pytest.fixture
+async def client(app: FastAPI) -> AsyncClient:
+    async with AsyncClient(app=app, base_url="http://app.io") as client:
+        yield client
 
 
 @pytest.fixture(scope='function')
-def dataset(client: TestClient, db: orm.Session) -> Dataset:
+async def dataset(db: AsyncIOMotorDatabase) -> Dataset:
     dataset = Dataset()
-    dataset.load(db)
+    await dataset.load(db)
     return dataset
 
 
 @pytest.fixture(name="login:admin", scope="function")
-def login_admin(client: TestClient, dataset: Dataset):
-    response: Response = client.post("/v1/login", data={
+async def login_admin(client: AsyncClient, dataset: Dataset):
+    response = await client.post("/v1/login", data={
         "username": dataset.admin.username,
         "password": dataset.ADMIN_PASSWORD
     })

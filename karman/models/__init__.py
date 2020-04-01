@@ -1,3 +1,3 @@
-from .base import Model
+from .base import Document
 from .imports import *
 from .user import *

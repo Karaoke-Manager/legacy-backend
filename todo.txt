@@ -1,2 +1,40 @@
-Stubs:
-  - Redis Stuff
+Database:
+  - Additional Schema Info for ObjectId: https://pydantic-docs.helpmanual.io/usage/schema/
+Documentation:
+  - Stubs for Redis Stuff
+  - Stubs for MongoDB Stuff
+  - name: Proper Docs
+    url: https://stackoverflow.com/questions/1523427/what-is-the-common-header-format-of-python-files
+
+Testing:
+  - Redis & Database for each parallel test
+  - https://redis.io/commands/select
+  - https://fastapi.tiangolo.com/advanced/testing-dependencies/
+  - https://github.com/pytest-dev/pytest-xdist/issues/280
+
+Logging:
+  - Non blocking logging (with python standard library)
+
+Features:
+  Streaming Up & Downloads:
+    - https://github.com/tiangolo/fastapi/issues/58
+    - https://www.starlette.io/requests/
+  Efficient Archives: https://www.nginx.com/resources/wiki/modules/zip/
+  Celery: http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html
+  ETags:
+    - https://github.com/steinitzu/fastapi-etag
+    - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Match
+    - https://www.baeldung.com/etags-for-rest-with-spring
+    - Possibly as middleware?
+
+CI:
+  Build Docs and host on GitLab Pages:
+    - https://github.com/sourcey/spectacle
+
+Performance:
+  Use orjson: https://pydantic-docs.helpmanual.io/usage/exporting_models/
+
+Deployment:
+  - Dockerfile project
+  - Multi Project Pipeline: https://docs.gitlab.com/ee/ci/multi_project_pipelines.html
+    info: Probably subscription based?

@@ -4,17 +4,15 @@ import jwt
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jwt import PyJWTError
+from motor.core import AgnosticDatabase
 from pydantic import ValidationError
-from sqlalchemy.orm import Session
 
 from karman import models
-from karman.models import User
 from karman.scopes import all_scopes
-from .database import database
+from .mongo import get_db
+from ..helpers.crypto import create_jwt_token, TokenPayload, verify_jwt_token
 
 __all__ = ["create_access_token", "current_user", "admin_user", "required_scopes"]
-
-from ..helpers.crypto import create_jwt_token, TokenPayload, verify_jwt_token
 
 
 def create_access_token(user: models.User, scopes: Collection[str]) -> jwt.PyJWT:
@@ -27,6 +25,7 @@ def create_access_token(user: models.User, scopes: Collection[str]) -> jwt.PyJWT
                 detail="User does not have the requested scopes."
             )
 
+    # TODO: Should this be async?
     encoded_jwt = create_jwt_token(TokenPayload(username=user.username, scopes=scopes or list(user.all_scopes)))
     return encoded_jwt
 
@@ -35,15 +34,16 @@ def create_access_token(user: models.User, scopes: Collection[str]) -> jwt.PyJWT
 oauth2_token = OAuth2PasswordBearer(tokenUrl="/v1/login", scopes=all_scopes)
 
 
-def current_user(security_scopes: SecurityScopes, db: Session = Depends(database),
-                 token: str = Depends(oauth2_token)) -> User:
+async def current_user(security_scopes: SecurityScopes,
+                       db: AgnosticDatabase = Depends(get_db),
+                       token: str = Depends(oauth2_token)) -> models.User:
     if security_scopes.scopes:
         authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
     else:
         authenticate_value = f"Bearer"
     try:
         payload = verify_jwt_token(token)
-        user = db.query(User).filter(User.username == payload.username).first()
+        user = models.User(**await db.users.find_one({"username": payload.username}))
         for scope in security_scopes.scopes:
             if scope not in payload.scopes and not user.is_admin:
                 raise HTTPException(
@@ -63,7 +63,7 @@ def current_user(security_scopes: SecurityScopes, db: Session = Depends(database
     )
 
 
-def admin_user(user: User = Depends(current_user)):
+async def admin_user(user: models.User = Depends(current_user)):
     if user.is_admin:
         return user
     raise HTTPException(
@@ -73,7 +73,7 @@ def admin_user(user: User = Depends(current_user)):
 
 
 def required_scopes(*scopes: str):
-    def dependency(user: User = Security(current_user, scopes=scopes)):
+    async def dependency(user: models.User = Security(current_user, scopes=scopes)):
         return user
 
     return dependency

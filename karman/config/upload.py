@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, Sequence
 
 from fastapi import APIRouter, FastAPI
 
@@ -19,7 +19,7 @@ class UploadServer(ABC):
 
     @property
     @abstractmethod
-    def server_type(self) -> str:
+    def upload_protocols(self) -> Sequence[str]:
         raise NotImplementedError
 
     @abstractmethod

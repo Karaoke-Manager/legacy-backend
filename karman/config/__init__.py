@@ -4,7 +4,7 @@ from typing import Union, List
 import yaml
 from fastapi import FastAPI
 from funcy import cached_property
-from pydantic import RedisDsn, BaseModel, PyObject
+from pydantic import RedisDsn, BaseModel, PyObject, AnyUrl
 
 from .config import StorageConfig, JWTConfig, TestConfig
 from ..helpers.listify import listify
@@ -20,7 +20,7 @@ class AppConfig(BaseModel):
     debug: bool = False
 
     redis: RedisDsn
-    database: str
+    mongodb: AnyUrl
 
     test: TestConfig = TestConfig()
     jwt: JWTConfig

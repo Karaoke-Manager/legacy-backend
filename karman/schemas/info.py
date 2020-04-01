@@ -6,7 +6,7 @@ from karman.schemas.base import BaseSchema
 
 
 class UploadServerInfo(BaseSchema):
-    type: str
+    protocols: List[str]
     url: AnyUrl
 
 

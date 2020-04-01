@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Union, Dict
+from typing import Union, Dict, Sequence
 
 from aioredis import Redis
 from fastapi import FastAPI, APIRouter, Depends, Header, HTTPException
@@ -8,9 +8,9 @@ from jwt import PyJWTError
 from pydantic import BaseModel, Field, validator
 from starlette import status
 
+from karman.config.upload import UploadServer
 from karman.helpers.crypto import verify_jwt_token
-from karman.utils import redis, UploadManager
-from .upload import UploadServer
+from karman.utils import UploadManager, get_redis
 
 __all__ = ["Tusd"]
 
@@ -53,15 +53,15 @@ class Tusd(UploadServer):
         self.path_prefix = path_prefix
 
     @property
-    def server_type(self) -> str:
-        return "tusd"
+    def upload_protocols(self) -> Sequence[str]:
+        return "tus",
 
     def register_routes(self, app: Union[FastAPI, APIRouter]) -> None:
         # TODO: Document This Endpoint
 
         @app.post(self.hook_route, include_in_schema=False)
         async def process_hook(data: TusdHookSchema, hook_name: str = Header(...),
-                               redis_pool: Redis = Depends(redis),
+                               redis: Redis = Depends(get_redis),
                                uploader: UploadManager = Depends()):
             uid = data.request.headers.get("upload-id")
             if hook_name == "pre-create":
@@ -82,19 +82,19 @@ class Tusd(UploadServer):
                         raise HTTPException(status.HTTP_428_PRECONDITION_REQUIRED,
                                             detail="Cannot create upload for specified id")
             elif hook_name == "post-create":
-                await redis_pool.hset(Tusd.REDIS_KEY, data.upload.id, uid)
+                await redis.hset(Tusd.REDIS_KEY, data.upload.id, uid)
             elif hook_name == "post-finish":
-                uid = await redis_pool.hget(Tusd.REDIS_KEY, data.upload.id)
-                await redis_pool.hdel(Tusd.REDIS_KEY, data.upload.id)
+                uid = await redis.hget(Tusd.REDIS_KEY, data.upload.id)
+                await redis.hdel(Tusd.REDIS_KEY, data.upload.id)
                 file = os.path.relpath(data.upload.storage.path, self.path_prefix)
                 await asyncio.gather(*[
-                    redis_pool.hdel(Tusd.REDIS_KEY, data.upload.id),
+                    redis.hdel(Tusd.REDIS_KEY, data.upload.id),
                     uploader.end_upload(uid.decode(), file)
                 ])
             elif hook_name == "post-terminate":
-                uid = await redis_pool.hget(Tusd.REDIS_KEY, data.upload.id)
+                uid = await redis.hget(Tusd.REDIS_KEY, data.upload.id)
                 await asyncio.gather(*[
-                    redis_pool.hdel(Tusd.REDIS_KEY, data.upload.id),
+                    redis.hdel(Tusd.REDIS_KEY, data.upload.id),
                     uploader.end_upload(uid.decode(), None)
                 ])
                 # TODO: Delete Files

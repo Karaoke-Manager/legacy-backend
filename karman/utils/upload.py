@@ -1,70 +1,50 @@
 import asyncio
-import re
 import uuid
-from typing import Callable, Dict, Awaitable, Tuple, Sequence, Optional
+from typing import Callable, Awaitable, Optional
 
-from aioredis import Redis, Channel
+from aioredis import Redis
 from fastapi import Depends
 
+from fastapi_helpers import app_dependency
+from karman.app import app
 from karman.config import app_config
-from karman.utils.redis import redis
+from .callback import CallbackChannel
+from .redis import get_redis
+
+UPLOADS_CHANNEL = "channel:uploads"
+
+
+@app_dependency(app)
+async def get_uploads_callback_channel():
+    async with CallbackChannel(await get_redis(), UPLOADS_CHANNEL) as channel:
+        yield channel
 
 
 class UploadManager:
     UPLOADS_KEY = "uploads"
-    UPLOADS_CHANNEL = "channel:uploads"
 
-    callbacks: Dict[uuid.UUID, Tuple[Callable[[Optional[str]], Awaitable], Sequence]] = {}
-    subscribed = False
+    def __init__(self,
+                 redis: Redis = Depends(get_redis),
+                 channel: CallbackChannel = Depends(get_uploads_callback_channel)):
+        self.redis = redis
+        self.channel = channel
 
-    @staticmethod
-    async def register_callback(uid: uuid.UUID,
-                                callback: Tuple[Callable[[Optional[str]], Awaitable], Sequence],
-                                redis_pool: Redis):
-        assert callback is not None
-        if not UploadManager.subscribed:
-            UploadManager.subscribed = True
-            channel, = await redis_pool.subscribe(UploadManager.UPLOADS_CHANNEL)
-            asyncio.create_task(UploadManager.callback_loop(channel))
-        UploadManager.callbacks[uid] = callback
-
-    @staticmethod
-    async def callback_loop(channel: Channel):
-        message: bytes
-        async for message in channel.iter():
-            match = re.match("^(?P<uuid>[^:]+)(: (?P<file>.+))?$", message.decode())
-            if not match:
-                continue
-            try:
-                uid = uuid.UUID(match.group("uuid"))
-                file = match.group("file")
-                (callback, args) = UploadManager.callbacks.pop(uid)
-                await callback(file, *args)
-            except (ValueError, KeyError):
-                pass
-
-    def __init__(self, redis_pool: Redis = Depends(redis)):
-        self.redis = redis_pool
-
-    async def register_upload(self, callback: Callable[[Optional[str]], Awaitable], *args) -> uuid.UUID:
-        uid = uuid.uuid4()
+    async def register_upload(self, callback: Callable[[Optional[str]], Awaitable], *args, **kwargs) -> str:
+        uid = str(uuid.uuid4())
         await asyncio.gather(*[
-            UploadManager.register_callback(uid, (callback, args), self.redis),
-            self.redis.hset(self.UPLOADS_KEY, str(uid), "pending")
+            self.channel.register_callback(uid, callback, *args, **kwargs),
+            self.redis.hset(self.UPLOADS_KEY, uid, "")
         ])
         return uid
 
-    async def begin_upload(self, uid: [str, uuid.UUID]):
-        exists = await self.redis.hget(UploadManager.UPLOADS_KEY, str(uid))
-        if exists.decode() != "pending":
+    async def begin_upload(self, uid: str):
+        state = await self.redis.hget(UploadManager.UPLOADS_KEY, uid)
+        if state is None or state.decode() != "":
             raise LookupError
-        await self.redis.hset(self.UPLOADS_KEY, str(uid), "in progress")
+        await self.redis.hset(self.UPLOADS_KEY, uid, "uploading")
 
     async def end_upload(self, uid: str, file: Optional[str]):
-        if file:
-            await self.redis.publish(self.UPLOADS_CHANNEL, f"{uid}: {file}")
-        else:
-            await self.redis.publish(self.UPLOADS_CHANNEL, uid)
+        await self.channel.dispatch_callback(uid, file)
 
     @staticmethod
     async def clean():

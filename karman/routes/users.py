@@ -1,11 +1,11 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from motor.core import AgnosticDatabase
 
-from karman import schemas, models
+from karman import schemas
 from karman.scopes import MANAGE_USERS
-from karman.utils import required_scopes, database
+from karman.utils import required_scopes, get_db
 
 router = APIRouter()
 
@@ -15,5 +15,5 @@ router = APIRouter()
     dependencies=[Depends(required_scopes(MANAGE_USERS))],
     response_model=List[schemas.User]
 )
-def list_users(db: Session = Depends(database)):
-    return db.query(models.User).all()
+async def list_users(db: AgnosticDatabase = Depends(get_db)):
+    return await db.users.find()

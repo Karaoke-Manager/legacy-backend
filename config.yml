@@ -2,11 +2,12 @@
 debug: true
 
 redis: redis://redis@localhost:6379
-database: sqlite:///./db.sqlite
+mongodb: mongodb://localhost/karman
 
 test:
-  redis: redis://redis@localhost:6379/test
-  database: sqlite:///./db-test.sqlite
+  redis: redis://redis@localhost:6379
+  mongo: mongodb://localhost:27017/
+  db_prefix: test-
 
 jwt:
   # WARNING: Change this

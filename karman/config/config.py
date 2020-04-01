@@ -2,12 +2,14 @@ from fs import open_fs
 from fs.base import FS
 from fs.mountfs import MountFS
 from funcy import cached_property
-from pydantic import BaseModel, RedisDsn
+from pydantic import BaseModel, RedisDsn, AnyUrl
 
 
 class TestConfig(BaseModel):
     redis: RedisDsn = None
-    database: str = None
+    redis_offset: int = 1
+    mongo: AnyUrl = None
+    db_prefix: str = ""
 
 
 class JWTConfig(BaseModel):

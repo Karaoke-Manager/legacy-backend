@@ -1,61 +1,66 @@
 import inspect
 from functools import wraps
-from typing import AsyncGenerator, Generator
-
-from starlette.applications import Starlette
+from typing import AsyncGenerator, Generator, Any, Union
 
 __all__ = ["app_dependency"]
 
+from fastapi import FastAPI, APIRouter
 
-def app_dependency(app: Starlette, name: str = None):
+
+def app_dependency(app: Union[FastAPI, APIRouter]):
+    instance: Any = None
+
     def decorator(fn):
-        attr_name = "app_" + (name if name else fn.__name__)
         if inspect.isasyncgenfunction(fn):
-            it: AsyncGenerator
+            generator: AsyncGenerator
 
             async def startup():
-                nonlocal it
-                it = fn()
-                setattr(app, attr_name, await it.__anext__())
+                nonlocal generator, instance
+                generator = fn()
+                instance = await generator.__anext__()
 
             async def shutdown():
                 try:
-                    await it.__anext__()
+                    await generator.__anext__()
                 except StopAsyncIteration:
                     pass
         elif inspect.iscoroutinefunction(fn):
             async def startup():
-                setattr(app, attr_name, await fn())
+                nonlocal instance
+                instance = await fn()
 
             shutdown = None
         elif inspect.isgeneratorfunction(fn):
-            it: Generator
+            generator: Generator
 
             def startup():
-                nonlocal it
-                it = fn()
-                setattr(app, attr_name, next(it))
+                nonlocal generator, instance
+                generator = fn()
+                instance = next(generator)
 
             def shutdown():
                 try:
-                    next(it)
+                    next(generator)
                 except StopIteration:
                     pass
         elif inspect.isfunction(fn):
+
             def startup():
-                setattr(app, attr_name, fn())
+                nonlocal instance
+                instance = fn()
 
             shutdown = None
         else:
             raise ValueError("Unsupported app dependency")
 
-        app.on_event("startup")(startup)
+        app.router.on_startup.append(startup)
         if shutdown is not None:
-            app.on_event("shutdown")(shutdown)
+            app.router.on_shutdown.insert(0, shutdown)
 
         @wraps(fn)
         async def dependency():
-            return getattr(app, attr_name, None)
+            nonlocal instance
+            return instance
 
         return dependency
 
