@@ -1,14 +1,14 @@
 from typing import List, Set
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from pydantic import validator, root_validator
+from pydantic import root_validator
 from pymongo import ASCENDING
 from pymongo.database import Database
 
 from karman.helpers.crypto import hash_password
 from .base import Document, Migration
 
-__all__ = ["User", "Role"]
+__all__ = ["User", "Role", "Scope"]
 
 Scope = str
 
@@ -18,16 +18,12 @@ class Role(Document):
         name = "role-unique-index"
 
         @classmethod
-        def execute(cls, db: Database):
-            db.roles.create_index([("name", ASCENDING)], unique=True)
+        async def execute(cls, db: Database):
+            await db.roles.create_index([("name", ASCENDING)], unique=True)
 
     __collection__ = "role"
     name: str
     scopes: Set[Scope] = []
-
-    @validator('name')
-    def validate_name(cls, value):
-        return value.lower()
 
     def __hash__(self):
         return self.name.__hash__()
@@ -38,8 +34,8 @@ class User(Document):
         name = "user-unique-index"
 
         @classmethod
-        def execute(cls, db: Database):
-            db.users.create_index([("name", ASCENDING)], unique=True)
+        async def execute(cls, db: Database):
+            await db.users.create_index([("name", ASCENDING)], unique=True)
 
     __collection__ = "user"
     username: str

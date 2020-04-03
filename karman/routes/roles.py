@@ -3,9 +3,11 @@ from typing import List
 from bson import ObjectId
 from fastapi import APIRouter, Depends
 from motor.core import AgnosticDatabase
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from starlette import status
 
 from karman import schemas, models
+from karman.helpers.mongo import MongoID
 from karman.utils import get_db
 
 router = APIRouter()
@@ -21,11 +23,10 @@ router = APIRouter()
         }
     }
 )
-async def add_role(data: schemas.CreateRole, db: AgnosticDatabase = Depends(get_db)):
+async def add_role(data: schemas.CreateRole, db: AsyncIOMotorDatabase = Depends(get_db)):
     # FIXME: Handle Integrity Errors
     role = models.Role(**data.dict())
-    role_id = await db.roles.insert_one(role.json())
-    role.id = role_id
+    await role.insert(db)
     return role
 
 
@@ -33,25 +34,27 @@ async def add_role(data: schemas.CreateRole, db: AgnosticDatabase = Depends(get_
     "/",
     response_model=List[schemas.Role]
 )
-async def list_roles(db: AgnosticDatabase = Depends(get_db)):
-    return await db.roles.find()
+async def list_roles(db: AsyncIOMotorDatabase = Depends(get_db)):
+    # TODO: Documentation: Never paginated
+    return [role async for role in models.Role.all(db)]
 
 
 @router.get(
     "/{role_id}",
     response_model=schemas.Role
 )
-async def get_role(role_id: ObjectId, db: AgnosticDatabase = Depends(get_db)):
-    # return get_or_404(db, models.Role, role_id)
+async def get_role(role_id: MongoID, db: AsyncIOMotorDatabase = Depends(get_db)):
     # FIXME: Handle 404
-    return await db.roles.find_one({"_id": role_id})
+    return await models.Role.get(db, role_id)
 
 
 @router.put(
     '/{role_id}',
     response_model=schemas.Role
 )
-def update_role(role_id: int, data: schemas.UpdateRole, db: AgnosticDatabase = Depends(get_db)):
+def update_role(role_id: MongoID, data: schemas.UpdateRole, db: AsyncIOMotorDatabase = Depends(get_db)):
+    # TODO: Handle 404
+    role = models.Role.get(db, role_id)
     # TODO: Implement
     pass
     # try:

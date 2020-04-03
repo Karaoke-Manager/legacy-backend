@@ -4,19 +4,19 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+typer = "*"
 pytest = "*"
+asgi-lifespan = "*"
 pytest-asyncio = "*"
 pytest-xdist = "*"
-requests = "*"
-typer = "*"
+httpx = "*"
 mypy = "*"
 motor-stubs = {path = "./packages/motor-stubs",editable = true}
-asgi-lifespan = "*"
-httpx = "*"
 
 [packages]
 uvicorn = "*"
 FastAPI = "*"
+FastAPI-Helpers = {path = "./packages/fastapi-helpers",editable = true}
 Pydantic = "*"
 python-multipart = "*"
 PyJWT = "*"
@@ -24,7 +24,6 @@ passlib = {extras = ["bcrypt"],version = "*"}
 aioredis = "*"
 motor = "*"
 funcy = "*"
-FastAPI-Helpers = {path = "./packages/fastapi-helpers",editable = true}
 PyYAML = "*"
 fs = "*"
 
@@ -35,10 +34,8 @@ python_version = "3.7"
 serve = "uvicorn karman:app --reload"
 test = "pipenv run test:unit && pipenv run test:pep8"
 "test:unit" = "pytest -n auto"
+migrate = "python tasks/migrate.py"
+import-test-data = "python tasks/import_test_data.py"
 # TODO: Test pep8 tests
-"test:pep8" = "pytest --pep8"
 # TODO: Test coverage tests
-"test:coverage" = "pytest --cov=karman"
-"migrate:make" = "alembic revision --autogenerate"
-"migrate:apply" = "alembic upgrade head"
 clean = "rm -rf .mypy_cache .pytest_cache"

@@ -1,34 +1,18 @@
 import abc
-from typing import List, Type
+from typing import List, Type, TypeVar, AsyncIterator, Union, TYPE_CHECKING, Any
 
-from bson import ObjectId
 from bson.codec_options import TypeEncoder, CodecOptions, TypeRegistry
+from fastapi import routing
+from funcy import monkey
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
-from pydantic import BaseModel
-from pymongo.database import Database
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from pydantic.typing import AbstractSetIntStr, DictIntStrAny, DictStrAny
+
+from karman.helpers.mongo import MongoID
 
 __all__ = ["Document", "Migration"]
-
-
-def patch_oid_class():
-    def get_oid_validators():
-        yield validate_object_id
-
-    def validate_object_id(value):
-        return ObjectId(value)
-
-    def modify_oid_schema(field_schema):
-        # TODO: Is this right?
-        field_schema.update(
-            type="string",
-            length=24
-        )
-
-    ObjectId.__get_validators__ = get_oid_validators
-    ObjectId.__modify_schema__ = modify_oid_schema
-
-
-patch_oid_class()
 
 
 class SetEncoder(TypeEncoder):
@@ -47,6 +31,8 @@ class FrozensetEncoder(TypeEncoder):
 
 encoders: List[TypeEncoder] = [SetEncoder(), FrozensetEncoder()]
 
+DocumentType = TypeVar("DocumentType", bound='Document')
+
 
 class Document(BaseModel):
     def __init_subclass__(cls: Type["Document"], **kwargs):
@@ -56,28 +42,60 @@ class Document(BaseModel):
             python_type = cls
 
             def transform_python(self, value: cls):
-                return value.dict()
+                return value.document()
 
-        encoders.append(Encoder())
+        # encoders.append(Encoder())
 
     __collection__: str
-    _id: ObjectId = None
+    id: MongoID = Field(None, alias="_id")
 
     class Config:
         validate_all = True
         validate_assignment = True
+        allow_population_by_field_name = True
+
+    def document(self, *,
+                 include: Union['AbstractSetIntStr', 'DictIntStrAny'] = None,
+                 exclude: Union['AbstractSetIntStr', 'DictIntStrAny'] = None) -> 'DictStrAny':
+        return self.dict(by_alias=True,
+                         include=include,
+                         exclude=exclude,
+                         exclude_defaults=True)
 
     @classmethod
     def collection(cls, db: AsyncIOMotorDatabase) -> AsyncIOMotorCollection:
         codec_options = CodecOptions(type_registry=TypeRegistry(encoders))
         return db.get_collection(cls.__collection__, codec_options=codec_options)
 
+    @classmethod
+    async def get(cls, db: AsyncIOMotorDatabase, document_id: Union[str, MongoID]):
+        if isinstance(document_id, str):
+            document_id = MongoID(document_id)
+        return cls.collection(db).find_one({"_id": document_id})
+
+    @classmethod
+    async def all(cls: Type[DocumentType], db: AsyncIOMotorDatabase, **kwargs) -> AsyncIterator[DocumentType]:
+        async for doc in cls.collection(db).find():
+            yield cls(**doc)
+
+    async def reload(self, db: AsyncIOMotorDatabase):
+        updated = self.__class__(**await self.collection(db).find_one({"_id": self.id}))
+        object.__setattr__(self, '__dict__', updated.__dict__)
+
     async def insert(self, db: AsyncIOMotorDatabase):
-        await self.collection(db).insert_one(self.dict())
+        result = await self.collection(db).insert_one(self.document())
+        self.id = result.inserted_id
 
     @classmethod
     async def batch_create(cls, db: AsyncIOMotorDatabase, *objects: "Document"):
-        await cls.collection(db).insert_many([o.dict() for o in objects])
+        await cls.collection(db).insert_many([o.document() for o in objects])
+
+
+@monkey(routing)
+def _prepare_response_content(res: Any, *, by_alias: bool = True, exclude_unset: bool):
+    if isinstance(res, Document):
+        return res
+    return _prepare_response_content.original(res, by_alias=by_alias, exclude_unset=exclude_unset)
 
 
 migration_names = set()
@@ -86,6 +104,8 @@ migration_names = set()
 class Migration(abc.ABC):
 
     def __init_subclass__(cls, *args, **kwargs):
+        if not hasattr(cls, "name") or not cls.name:
+            raise AttributeError("Migrations must have a name")
         if cls.name in migration_names:
             raise ValueError(f'Name "{cls.name}" is already in use.')
         migration_names.add(cls.name)
@@ -95,11 +115,6 @@ class Migration(abc.ABC):
     dependencies: List[Type["Migration"]] = []
 
     @classmethod
-    def validate(cls):
-        if not hasattr(cls, "name") or not cls.name:
-            raise AttributeError("Migrations must have a name")
-
-    @classmethod
     @abc.abstractmethod
-    def execute(cls, db: Database):
+    async def execute(cls, db: AsyncIOMotorDatabase):
         raise NotImplementedError

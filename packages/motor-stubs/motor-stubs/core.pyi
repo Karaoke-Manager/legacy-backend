@@ -1,5 +1,5 @@
 from typing import (Any, Type, Generic, Optional, TypeVar, Union, Literal, Callable, Awaitable, Mapping, MutableMapping,
-                    Tuple, Sequence, Collection, List, Iterable)
+                    Tuple, Sequence, Collection, List, Iterable, AsyncIterator)
 
 from bson import CodecOptions, Timestamp, SON, DBRef, ObjectId, Code
 from bson.raw_bson import RawBSONDocument
@@ -154,7 +154,6 @@ class AgnosticClient(Generic[ClientSessionType, DatabaseType, CommandCursorType,
     @property
     def server_selection_timeout(self) -> Time: ...
 
-    @property
     async def start_session(self, causal_consistency: bool = ...,
                             default_transaction_options: TransactionOptions = ...) -> ClientSessionType: ...
 
@@ -565,6 +564,7 @@ class AgnosticCollection(Generic[ClientSessionType,
 
 class AgnosticBaseCursor(Generic[ClientSessionType,
                                  CollectionType],
+                         AsyncIterator[Document],
                          AgnosticBase):
     @property
     def address(self) -> Optional[Address]: ...
@@ -580,7 +580,7 @@ class AgnosticBaseCursor(Generic[ClientSessionType,
 
     def __init__(self, cursor: Cursor, collection: CollectionType) -> None: ...
 
-    def __aiter__(self): ...
+    def __aiter__(self: CursorType) -> CursorType: ...
 
     async def __anext__(self) -> Document: ...
 

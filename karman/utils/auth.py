@@ -4,7 +4,7 @@ import jwt
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jwt import PyJWTError
-from motor.core import AgnosticDatabase
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import ValidationError
 
 from karman import models
@@ -35,7 +35,7 @@ oauth2_token = OAuth2PasswordBearer(tokenUrl="/v1/login", scopes=all_scopes)
 
 
 async def current_user(security_scopes: SecurityScopes,
-                       db: AgnosticDatabase = Depends(get_db),
+                       db: AsyncIOMotorDatabase = Depends(get_db),
                        token: str = Depends(oauth2_token)) -> models.User:
     if security_scopes.scopes:
         authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
@@ -43,7 +43,7 @@ async def current_user(security_scopes: SecurityScopes,
         authenticate_value = f"Bearer"
     try:
         payload = verify_jwt_token(token)
-        user = models.User(**await db.users.find_one({"username": payload.username}))
+        user = await models.User.get_by_username(db, payload.username)
         for scope in security_scopes.scopes:
             if scope not in payload.scopes and not user.is_admin:
                 raise HTTPException(

@@ -1,5 +1,3 @@
-import asyncio
-
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from karman.models import Role, User
@@ -21,10 +19,8 @@ class Dataset:
         ]
 
     async def user_count(self, db: AsyncIOMotorDatabase):
-        return await db.users.count()
+        return await User.collection(db).count_documents({})
 
     async def load(self, db: AsyncIOMotorDatabase):
-        await asyncio.gather(
-            self.manager_role.insert(db),
-            User.batch_create(db, self.admin, *self.users)
-        )
+        await self.manager_role.insert(db)
+        await User.batch_create(db, self.admin, *self.users)
