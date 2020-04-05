@@ -25,7 +25,7 @@ def find_stub_files():
 # TODO: Stubs for GridFS
 
 setup(
-    name='motor-stubs',
+    name='Motor-Stubs',
     version='0.1',
     url='https://gitlab.com/Codello/motor-stubs/',  # TODO: Publish this package
     license='MIT',

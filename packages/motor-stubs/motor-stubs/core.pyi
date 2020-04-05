@@ -23,10 +23,12 @@ UpdateDocument = Document
 AggregationStage = Document
 AggregationPipeline = List[AggregationStage]  # TODO: This is probably false / an implementation error
 
-Filter = Mapping[str, Any]
+Query = Mapping[str, Any]
 Direction = Literal[1, -1]  # [pymongo.ASCENDING, pymongo.DESCENDING]
-Index = List[Tuple[str, Direction]]
-Projection = Union[List[str], Mapping[str, bool]]
+IndexSpecifier = Literal['2d', 'geoHaystack', '2dsphere', 'hashed', 'text']
+Index = List[Tuple[str, Union[Direction, IndexSpecifier]]]
+Sort = List[Tuple[str, Direction]]
+Projection = Union[List[str], Mapping[str, Any]]
 ReturnDocument = Literal[True, False]  # [ReturnDocument.BEFORE, ReturnDocument.AFTER]
 FullDocument = Optional[Literal["updateLookup"]]
 AllowableErrors = list  # TODO: Refine this type
@@ -244,8 +246,8 @@ class AgnosticDatabase(Generic[ClientSessionType,
                                LatentCommandCursorType,
                                ChangeStreamType],
                        AgnosticBaseProperties):
-    async def command(self, command: str,
-                      value: int = ...,
+    async def command(self, command: Union[str, Mapping[str, Any]],
+                      value: Any = ...,
                       check: bool = ...,
                       allowable_errors: AllowableErrors = ...,
                       read_preference: ReadPreference = ...,
@@ -275,11 +277,11 @@ class AgnosticDatabase(Generic[ClientSessionType,
                        read_concern: ReadConcern = ...) -> CollectionType: ...
 
     async def list_collection_names(self, session: ClientSessionType = ...,
-                                    filter: Filter = ...,
+                                    filter: Query = ...,
                                     **kwargs) -> Sequence[str]: ...
 
     async def list_collections(self, session: ClientSessionType = ...,
-                               filter: Filter = ...,
+                               filter: Query = ...,
                                **kwargs) -> CommandCursorType: ...  # TODO: Is the return type correct?
 
     @property
@@ -357,7 +359,7 @@ class AgnosticCollection(Generic[ClientSessionType,
                          bypass_document_validation: bool = ...,
                          session: ClientSessionType = ...) -> BulkWriteResult: ...
 
-    async def count_documents(self, filter: Filter,
+    async def count_documents(self, filter: Query,
                               session: ClientSessionType = ...,
                               **kwargs) -> Count: ...
 
@@ -369,16 +371,16 @@ class AgnosticCollection(Generic[ClientSessionType,
                              session: ClientSessionType = ...,
                              **kwargs) -> Sequence[str]: ...
 
-    async def delete_many(self, filter: Filter,
+    async def delete_many(self, filter: Query,
                           collation: Collation = ...,
                           session: ClientSessionType = ...) -> DeleteResult: ...
 
-    async def delete_one(self, filter: Filter,
+    async def delete_one(self, filter: Query,
                          collation: Collation = ...,
                          session: ClientSessionType = ...) -> DeleteResult: ...
 
     async def distinct(self, key: str,
-                       filter: Filter,
+                       filter: Query,
                        session: ClientSessionType = ...,
                        **kwargs) -> List[str]: ...
 
@@ -392,29 +394,29 @@ class AgnosticCollection(Generic[ClientSessionType,
 
     async def estimated_document_count(self, **kwargs) -> Count: ...
 
-    async def find_one(self, filter: Filter = ..., *args, **kwargs) -> Document: ...
+    async def find_one(self, filter: Query = ..., *args, **kwargs) -> Document: ...
 
-    async def find_one_and_delete(self, filter: Filter,
+    async def find_one_and_delete(self, filter: Query,
                                   projection: Projection = ...,
-                                  sort: Index = ...,
+                                  sort: Sort = ...,
                                   session: ClientSessionType = ...,
                                   **kwargs) -> Document: ...
 
-    async def find_one_and_replace(self, filter: Filter,
+    async def find_one_and_replace(self, filter: Query,
                                    replacement: Document,
                                    projection: Projection = ...,
-                                   sort: Index = ...,
+                                   sort: Sort = ...,
                                    return_document: ReturnDocument = ...,
                                    session: ClientSessionType = ...,
                                    **kwargs) -> Document: ...
 
-    async def find_one_and_update(self, filter: Filter,
+    async def find_one_and_update(self, filter: Query,
                                   update: Union[UpdateDocument, AggregationPipeline],
                                   projection: Projection = ...,
-                                  sort: Index = ...,
+                                  sort: Sort = ...,
                                   upsert: bool = ...,
                                   return_document: ReturnDocument = ...,
-                                  array_filters: List[Filter] = ...,
+                                  array_filters: List[Query] = ...,
                                   session: ClientSessionType = ...,
                                   **kwargs) -> Document: ...
 
@@ -454,22 +456,22 @@ class AgnosticCollection(Generic[ClientSessionType,
 
     async def rename(self, new_name: str, session: ClientSessionType = ..., **kwargs) -> None: ...
 
-    async def replace_one(self, filter: Filter,
+    async def replace_one(self, filter: Query,
                           replacement: Document,
                           upsert: bool = ...,
                           bypass_document_validation: bool = ...,
                           collation: Collation = ...,
                           session: ClientSessionType = ...) -> UpdateResult: ...
 
-    async def update_many(self, filter: Filter,
+    async def update_many(self, filter: Query,
                           update: Document,
                           upsert: bool = ...,
-                          array_filters: List[Filter] = ...,
+                          array_filters: List[Query] = ...,
                           bypass_document_validation: bool = ...,
                           collation: Collation = ...,
                           session: ClientSessionType = ...) -> UpdateResult: ...
 
-    async def update_one(self, filter: Filter,
+    async def update_one(self, filter: Query,
                          update: Document,
                          upsert: bool = ...,
                          bypass_document_validation: bool = ...,
@@ -495,13 +497,13 @@ class AgnosticCollection(Generic[ClientSessionType,
 
     def __getitem__(self: CollectionType, name: str) -> CollectionType: ...
 
-    def find(self, filter: Filter = ...,
+    def find(self, filter: Query = ...,
              projection: Projection = ...,
              skip: Count = ...,
              limit: Count = ...,
              no_cursor_timeout: bool = ...,
              cursor_type: int = ...,
-             sort: Index = ...,
+             sort: Sort = ...,
              allow_partial_results: bool = ...,
              oplog_replay: bool = ...,
              modifiers: dict = ...,
@@ -519,13 +521,13 @@ class AgnosticCollection(Generic[ClientSessionType,
              comment: str = ...,
              session: ClientSessionType = ...) -> CursorType: ...
 
-    def find_raw_batches(self, filter: Filter = ...,
+    def find_raw_batches(self, filter: Query = ...,
                          projection: Projection = ...,
                          skip: Count = ...,
                          limit: Count = ...,
                          no_cursor_timeout: bool = ...,
                          cursor_type: int = ...,
-                         sort: Index = ...,
+                         sort: Sort = ...,
                          allow_partial_results: bool = ...,
                          oplog_replay: bool = ...,
                          modifiers: dict = ...,
@@ -618,7 +620,7 @@ class AgnosticCursor(Generic[ClientSessionType, CollectionType],
 
     def max_scan(self: CursorType, max_scan: Count) -> CursorType: ...
 
-    def sort(self: CursorType, key_or_list: Union[str, Index], direction: Direction = ...) -> CursorType: ...
+    def sort(self: CursorType, key_or_list: Union[str, Sort], direction: Direction = ...) -> CursorType: ...
 
     def hint(self: CursorType, hint: Index) -> CursorType: ...
 

@@ -1,27 +1,25 @@
 from typing import List, Set
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import root_validator
 from pymongo import ASCENDING
-from pymongo.database import Database
 
 from karman.helpers.crypto import hash_password
-from .base import Document, Migration
 
 __all__ = ["User", "Role", "Scope"]
+
+from motor_odm import Document
 
 Scope = str
 
 
 class Role(Document):
-    class UniqueNameMigration(Migration):
-        name = "role-unique-index"
+    class Meta:
+        collection = "roles"
+        validate = True
+        indexes = [
+            ([("name", ASCENDING)], {"unique": True})
+        ]
 
-        @classmethod
-        async def execute(cls, db: Database):
-            await db.roles.create_index([("name", ASCENDING)], unique=True)
-
-    __collection__ = "role"
     name: str
     scopes: Set[Scope] = []
 
@@ -30,14 +28,13 @@ class Role(Document):
 
 
 class User(Document):
-    class UniqueNameMigration(Migration):
-        name = "user-unique-index"
+    class Meta:
+        collection = "users"
+        validate = True
+        indexes = [
+            ([("username", ASCENDING)], {"unique": True})
+        ]
 
-        @classmethod
-        async def execute(cls, db: Database):
-            await db.users.create_index([("name", ASCENDING)], unique=True)
-
-    __collection__ = "user"
     username: str
     password_hash: str
     is_admin: bool = False
@@ -61,11 +58,12 @@ class User(Document):
 
     @property
     def all_scopes(self) -> Set[Scope]:
-        return self.scopes | {scope for role in self.roles for scope in role.scopes}
+        return self.scopes.union(*(role.scopes for role in self.roles))
 
     def __hash__(self):
         return self.username.__hash__()
 
     @classmethod
-    async def get_by_username(cls, db: AsyncIOMotorDatabase, username: str):
-        return cls(**await cls.collection(db).find_one({"username": username}))
+    async def get_by_username(cls, username: str):
+        document = await cls.collection().find_one({"username": username})
+        return cls(**document) if document else None

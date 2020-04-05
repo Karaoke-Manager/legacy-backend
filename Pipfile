@@ -17,12 +17,13 @@ motor-stubs = {path = "./packages/motor-stubs",editable = true}
 uvicorn = "*"
 FastAPI = "*"
 FastAPI-Helpers = {path = "./packages/fastapi-helpers",editable = true}
-Pydantic = "*"
-python-multipart = "*"
+Pydantic = "*" # TODO: Is this explicit dependency neccessary?
+python-multipart = "*"  # TODO: What is this for?
 PyJWT = "*"
 passlib = {extras = ["bcrypt"],version = "*"}
 aioredis = "*"
 motor = "*"
+Motor-ODM = {path = "./packages/motor-odm",editable = true}
 funcy = "*"
 PyYAML = "*"
 fs = "*"

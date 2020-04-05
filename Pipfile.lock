@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "272bb71ded5d27a9605a5136e29eaf59f0d7b5c49f4cc130a56e2102e06f2f5f"
+            "sha256": "ae2d03bbf31755a32904e9d9f487e0a2bc5247f599249c4bff29daf3a44609c3"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -206,6 +206,10 @@
             ],
             "index": "pypi",
             "version": "==2.1.0"
+        },
+        "motor-odm": {
+            "editable": true,
+            "path": "./packages/motor-odm"
         },
         "passlib": {
             "extras": [

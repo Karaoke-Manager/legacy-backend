@@ -1,0 +1,4 @@
+Migrations:
+  - Support Creating Schemas / Validators
+  - Support Capped Collections
+  - Support Renaming Collections
