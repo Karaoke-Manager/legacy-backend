@@ -1,11 +1,10 @@
 import pytest
+from bson import ObjectId
 from httpx import AsyncClient, Response
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from starlette.status import *
 
 from data import Dataset
 from karman import schemas, models
-from karman.helpers.mongo import MongoID
 from karman.scopes import all_scopes
 
 pytestmark = pytest.mark.asyncio
@@ -43,7 +42,7 @@ async def test_get_role(client: AsyncClient, dataset: Dataset):
 @pytest.mark.usefixtures("login:admin")
 async def test_update_role_id(client: AsyncClient, dataset: Dataset):
     response = await client.put(f"/v1/roles/{dataset.manager_role.id}", json={
-        "id": str(MongoID()),
+        "id": str(ObjectId()),
         "name": dataset.manager_role.name,
         "scopes": list(dataset.manager_role.scopes)
     })
@@ -51,78 +50,78 @@ async def test_update_role_id(client: AsyncClient, dataset: Dataset):
 
 
 @pytest.mark.usefixtures("login:admin")
-async def test_update_role_name(client: AsyncClient, db: AsyncIOMotorDatabase, dataset: Dataset):
+async def test_update_role_name(client: AsyncClient, dataset: Dataset):
     response = await client.put(f"/v1/roles/{dataset.manager_role.id}", json={
         "id": str(dataset.manager_role.id),
         "name": dataset.UNUSED_ROLE,
         "scopes": list(dataset.manager_role.scopes)
     })
-    await dataset.manager_role.reload(db)
+    await dataset.manager_role.reload()
     assert response.status_code == HTTP_200_OK
     assert schemas.Role(**response.json()).name == dataset.UNUSED_ROLE
     assert dataset.manager_role.name == dataset.UNUSED_ROLE
 
 
 @pytest.mark.usefixtures("login:admin")
-async def test_update_role_scopes(client: AsyncClient, db: AsyncIOMotorDatabase, dataset: Dataset):
+async def test_update_role_scopes(client: AsyncClient, dataset: Dataset):
     response = await client.put(f"/v1/roles/{dataset.manager_role.id}", json={
         "id": str(dataset.manager_role.id),
         "name": dataset.manager_role.name,
         "scopes": list(all_scopes.keys())
     })
-    dataset.manager_role.reload(db)
+    dataset.manager_role.reload()
     assert response.status_code == HTTP_200_OK
     assert schemas.Role(**response.json()).scopes == all_scopes.keys()
 
 
 @pytest.mark.usefixtures("login:admin")
-async def test_patch_role_id(client: AsyncClient, db: AsyncIOMotorDatabase, dataset: Dataset):
+async def test_patch_role_id(client: AsyncClient, dataset: Dataset):
     response = await client.patch(f"/v1/roles/{dataset.manager_role.id}", json={
-        "id": str(MongoID())
+        "id": str(ObjectId())
     })
     assert response.status_code == HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.usefixtures("login:admin")
-async def test_patch_role_name(client: AsyncClient, db: AsyncIOMotorDatabase, dataset: Dataset):
+async def test_patch_role_name(client: AsyncClient, dataset: Dataset):
     response = await client.patch(f"/v1/roles/{dataset.manager_role.id}", json={
         "name": dataset.UNUSED_ROLE
     })
-    dataset.manager_role.reload(db)
+    dataset.manager_role.reload()
     assert response.status_code == HTTP_200_OK
     assert dataset.manager_role.name == dataset.UNUSED_ROLE
     assert len(dataset.manager_role.scopes) > 0
 
 
 @pytest.mark.usefixtures("login:admin")
-async def test_patch_role_scopes(client: AsyncClient, db: AsyncIOMotorDatabase, dataset: Dataset):
+async def test_patch_role_scopes(client: AsyncClient, dataset: Dataset):
     previous_name = dataset.manager_role.name
     response = await client.patch(f"/v1/roles/{dataset.manager_role.id}", json={
         "scopes": list(all_scopes.keys())
     })
-    dataset.manager_role.reload(db)
+    dataset.manager_role.reload()
     assert response.status_code == HTTP_200_OK
     assert dataset.manager_role.name == previous_name
     assert dataset.manager_role.scopes == all_scopes.keys()
 
 
 @pytest.mark.usefixtures("login:admin")
-async def test_patch_role_name_and_scopes(client: AsyncClient, db: AsyncIOMotorDatabase, dataset: Dataset):
+async def test_patch_role_name_and_scopes(client: AsyncClient, dataset: Dataset):
     response = await client.patch(f"/v1/roles/{dataset.manager_role.id}", json={
         "name": dataset.UNUSED_ROLE,
         "scopes": list(all_scopes.keys())
     })
-    dataset.manager_role.reload(db)
+    dataset.manager_role.reload()
     assert response.status_code == HTTP_200_OK
     assert dataset.manager_role.name == dataset.UNUSED_ROLE
     assert dataset.manager_role.scopes == all_scopes.keys()
 
 
 @pytest.mark.usefixtures("login:admin")
-async def test_delete_role(client: AsyncClient, db: AsyncIOMotorDatabase, dataset: Dataset):
+async def test_delete_role(client: AsyncClient, dataset: Dataset):
     schema = schemas.Role.from_orm(dataset.manager_role)
     response = await client.delete(f"/v1/roles/{dataset.manager_role.id}")
-    dataset.manager_role.reload(db)
+    dataset.manager_role.reload()
     assert response.status_code == HTTP_200_OK
     assert schemas.Role(**response.json()) == schema
-    assert db.query(models.Role).get(schema.id) is None
+    assert models.Role.get(schema.id) is None

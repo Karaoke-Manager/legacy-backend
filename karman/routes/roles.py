@@ -7,7 +7,6 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from starlette import status
 
 from karman import schemas, models
-from karman.helpers.mongo import MongoID
 from karman.utils import get_db
 
 router = APIRouter()
@@ -23,10 +22,10 @@ router = APIRouter()
         }
     }
 )
-async def add_role(data: schemas.CreateRole, db: AsyncIOMotorDatabase = Depends(get_db)):
+async def add_role(data: schemas.CreateRole):
     # FIXME: Handle Integrity Errors
     role = models.Role(**data.dict())
-    await role.insert(db)
+    await role.insert()
     return role
 
 
@@ -34,25 +33,25 @@ async def add_role(data: schemas.CreateRole, db: AsyncIOMotorDatabase = Depends(
     "/",
     response_model=List[schemas.Role]
 )
-async def list_roles(db: AsyncIOMotorDatabase = Depends(get_db)):
+async def list_roles():
     # TODO: Documentation: Never paginated
-    return [role async for role in models.Role.all(db)]
+    return [role async for role in models.Role.all()]
 
 
 @router.get(
     "/{role_id}",
     response_model=schemas.Role
 )
-async def get_role(role_id: MongoID, db: AsyncIOMotorDatabase = Depends(get_db)):
+async def get_role(role_id: ObjectId):
     # FIXME: Handle 404
-    return await models.Role.get(db, role_id)
+    return await models.Role.get(role_id)
 
 
 @router.put(
     '/{role_id}',
     response_model=schemas.Role
 )
-def update_role(role_id: MongoID, data: schemas.UpdateRole, db: AsyncIOMotorDatabase = Depends(get_db)):
+def update_role(role_id: ObjectId, data: schemas.UpdateRole, db: AsyncIOMotorDatabase = Depends(get_db)):
     # TODO: Handle 404
     role = models.Role.get(db, role_id)
     # TODO: Implement

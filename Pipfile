@@ -11,7 +11,6 @@ pytest-asyncio = "*"
 pytest-xdist = "*"
 httpx = "*"
 mypy = "*"
-motor-stubs = {path = "./packages/motor-stubs",editable = true}
 
 [packages]
 uvicorn = "*"
@@ -23,7 +22,7 @@ PyJWT = "*"
 passlib = {extras = ["bcrypt"],version = "*"}
 aioredis = "*"
 motor = "*"
-Motor-ODM = {path = "./packages/motor-odm",editable = true}
+Motor-ODM = {path = "../Motor-ODM",editable = true}
 funcy = "*"
 PyYAML = "*"
 fs = "*"

@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from karman.config import app_config
-from karman.helpers.mongo import MongoID
+from motor_odm import ObjectId
 
 
 def to_camel_case(string: str):
@@ -19,8 +19,9 @@ class BaseSchema(BaseModel):
 
 
 class ModelSchema(BaseSchema):
-    id: MongoID
+    id: ObjectId
 
     class Config(BaseSchema.Config):
         orm_mode = True
-        json_encoders = {MongoID: str}
+        # FIXME: int?
+        json_encoders = {ObjectId: str}

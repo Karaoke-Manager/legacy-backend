@@ -43,7 +43,7 @@ async def current_user(security_scopes: SecurityScopes,
         authenticate_value = f"Bearer"
     try:
         payload = verify_jwt_token(token)
-        user = await models.User.get_by_username(db, payload.username)
+        user = await models.User.get(username=payload.username)
         for scope in security_scopes.scopes:
             if scope not in payload.scopes and not user.is_admin:
                 raise HTTPException(

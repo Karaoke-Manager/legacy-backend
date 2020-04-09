@@ -1,5 +1,3 @@
-from motor.motor_asyncio import AsyncIOMotorDatabase
-
 from karman.models import Role, User
 from karman.scopes import MANAGE_LIBRARY
 
@@ -18,9 +16,9 @@ class Dataset:
             User(username="user2", password="password1", roles={self.manager_role})
         ]
 
-    async def user_count(self, db: AsyncIOMotorDatabase):
-        return await User.collection(db).count_documents({})
+    async def user_count(self):
+        return await User.count()
 
-    async def load(self, db: AsyncIOMotorDatabase):
-        await self.manager_role.insert(db)
-        await User.batch_create(db, self.admin, *self.users)
+    async def load(self):
+        await self.manager_role.insert()
+        await User.batch_insert(self.admin, *self.users)

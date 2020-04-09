@@ -1,24 +1,18 @@
 from typing import List, Set
 
 from pydantic import root_validator
-from pymongo import ASCENDING
 
 from karman.helpers.crypto import hash_password
+from motor_odm import Document
 
 __all__ = ["User", "Role", "Scope"]
-
-from motor_odm import Document
 
 Scope = str
 
 
 class Role(Document):
-    class Meta:
+    class Mongo:
         collection = "roles"
-        validate = True
-        indexes = [
-            ([("name", ASCENDING)], {"unique": True})
-        ]
 
     name: str
     scopes: Set[Scope] = []
@@ -28,12 +22,8 @@ class Role(Document):
 
 
 class User(Document):
-    class Meta:
+    class Mongo:
         collection = "users"
-        validate = True
-        indexes = [
-            ([("username", ASCENDING)], {"unique": True})
-        ]
 
     username: str
     password_hash: str
@@ -62,8 +52,3 @@ class User(Document):
 
     def __hash__(self):
         return self.username.__hash__()
-
-    @classmethod
-    async def get_by_username(cls, username: str):
-        document = await cls.collection().find_one({"username": username})
-        return cls(**document) if document else None
