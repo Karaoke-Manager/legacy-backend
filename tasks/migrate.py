@@ -4,7 +4,6 @@ import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from karman.config import app_config
-from motor_odm import migrate
 
 MIGRATION_COLLECTION = "migrations"
 

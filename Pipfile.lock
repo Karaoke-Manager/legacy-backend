@@ -485,10 +485,10 @@
         },
         "hstspreload": {
             "hashes": [
-                "sha256:3d2a71e189aa9216e92130865d907a4be4fd5db6df79bfa6e843e72f86a05aef",
-                "sha256:3e952e761ea9c43ccf1c61c2b1962da63c66c85469b18608228f95fcae6535ee"
+                "sha256:acbf4d6fd362b363ce567db56a8667c4f0e43073001add9c4e43f449c11e1d81",
+                "sha256:ca0af58f803598a737d5f325212e488b24de1ac9f0cf6fa12da1a3f4651914e6"
             ],
-            "version": "==2020.4.7"
+            "version": "==2020.4.14"
         },
         "httpx": {
             "hashes": [

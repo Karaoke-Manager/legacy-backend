@@ -1,7 +1,8 @@
+from bson import ObjectId
 from pydantic import BaseModel
 
 from karman.config import app_config
-from motor_odm import ObjectId
+from motor_odm import Document  # noqa
 
 
 def to_camel_case(string: str):

@@ -36,6 +36,4 @@ test = "pipenv run test:unit && pipenv run test:pep8"
 "test:unit" = "pytest -n auto"
 migrate = "python tasks/migrate.py"
 import-test-data = "python tasks/import_test_data.py"
-# TODO: Test pep8 tests
-# TODO: Test coverage tests
 clean = "rm -rf .mypy_cache .pytest_cache"

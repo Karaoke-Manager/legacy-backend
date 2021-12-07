@@ -17,8 +17,8 @@ class Dataset:
         ]
 
     async def user_count(self):
-        return await User.count()
+        return await User.count_documents()
 
     async def load(self):
         await self.manager_role.insert()
-        await User.batch_insert(self.admin, *self.users)
+        await User.insert_many(self.admin, *self.users)

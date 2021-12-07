@@ -2,8 +2,6 @@ Database:
   - Additional Schema Info for ObjectId: https://pydantic-docs.helpmanual.io/usage/schema/
 Documentation:
   - Stubs for Redis Stuff
-  - name: Proper Docs
-    url: https://stackoverflow.com/questions/1523427/what-is-the-common-header-format-of-python-files
 
 Logging:
   - Non blocking logging (with python standard library)
