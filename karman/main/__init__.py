@@ -25,7 +25,7 @@ app = FastAPI(
     version="0.1",
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
     root_path_in_servers=False,
-    openapi_url="/openapi.json",
+    openapi_url=None,
     debug=app_config.debug,
 )
 app.mount("/v1", v1)
@@ -34,4 +34,4 @@ app.mount("/v1", v1)
 # The API root is not currently in use so we redirect to the documentation.
 @app.get("/", include_in_schema=False)
 def redirect_to_docs() -> RedirectResponse:
-    return RedirectResponse("/docs")
+    return RedirectResponse("/v1/docs")
