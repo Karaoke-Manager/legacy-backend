@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "Karman"
+version = "0.1.0"
+description = "A management software for UltraStar karaoke files."
+authors = ["Kim Wittenburg <codello@wittenburg.kim>"]
+license = "MIT"
+
+readme = "README.md"
+repository = "https://github.com/Karaoke-Manager/backend"
+# homepage = "..."
+# documentation = "..."
+
+keywords = ["fastapi", "asyncio", "ultrastar", "karaoke"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Framework :: AsyncIO"
+]
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/Karaoke-Manager/backend/issues"
+
+[tool.poe.tasks]
+[tool.poe.tasks.serve]
+cmd = "uvicorn karman:app --reload"
+help = "Runs a development instance"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.70.1"
+fastapi-pagination = "^0.9.1"
+uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+black = "^21.12b0"
+poethepoet = "^0.11.0"
+uvicorn = { version = "^0.16.0", extras = ["standard"] }
+
+[tool.poetry.extras]
+uvicorn = ["uvicorn"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
