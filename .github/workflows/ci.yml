@@ -1,0 +1,58 @@
+name: Continuous Integration
+on: [ push, pull_request ]
+
+env:
+  target_py_version: 3.9
+
+jobs:
+  lint:
+    name: Lint Code Style
+    runs-on: ubuntu-latest
+    if: "always()"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.target_py_version }}
+          cache: pip
+          cache-dependency-path: poetry.lock
+      - name: Install Poetry
+        # We do not need a virtual environment inside CI
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create false
+      - name: Install Dependencies
+        run: poetry install --no-root
+      - name: Run flake8
+        uses: TrueBrain/actions-flake8@master
+      - name: Run MyPy
+        uses: kolonialno/mypy-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    if: "always()"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.target_py_version }}
+          cache: pip
+          cache-dependency-path: poetry.lock
+      - name: Install Poetry
+        # We do not need a virtual environment inside CI
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create false
+      - name: Install Dependencies
+        run: poetry install --no-root
+      - name: Run Pytest
+        run: poe test --cov --cov-report=xml
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.xml

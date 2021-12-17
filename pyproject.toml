@@ -23,6 +23,8 @@ classifiers = [
 
 [tool.poe.tasks]
 serve = { cmd = "uvicorn karman:app --reload", help = "Runs a development instance" }
+test = { cmd = "pytest -n auto", help = "Run Tests" }
+clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml", help = "Remove build and cache files" }
 [tool.poe.tasks.lint]
 sequence = [
     "pflake8", # Runs black and isort as well
@@ -53,7 +55,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [tool.flake8]
-exclude = [".git", ".venv", ".mypy_cache"]
+exclude = [".git", ".venv", ".mypy_cache", ".pytest_cache"]
 max-line-length = 88
 max-complexity = 10
 select = ["BLK", "I", "C", "E", "F", "W", "B", "B950"]
@@ -76,6 +78,8 @@ flake8 = "^4.0.1"
 pyproject-flake8 = "^0.0.1-alpha.2"
 flake8-black = "^0.2.3"
 flake8-isort = "^4.1.1"
+pytest-xdist = "^2.5.0"
+pytest-cov = "^3.0.0"
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]
