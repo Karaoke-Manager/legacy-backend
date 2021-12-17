@@ -41,6 +41,8 @@ profile = "black"
 
 [tool.mypy]
 files = ["karman", "tests"]
+# TODO: Enable when https://github.com/samuelcolvin/pydantic/pull/3175 is merged
+# plugins = ["pydantic.mypy"]
 # Untyped definitions and calls
 disallow_untyped_defs = true
 # None and Optional handling
@@ -51,6 +53,9 @@ warn_unused_ignores = true
 warn_return_any = true
 # Miscellaneous
 warn_unused_configs = true
+
+[tool.pydantic-mypy]
+warn_untyped_fields = true
 
 [tool.poetry.dependencies]
 python = "^3.9"

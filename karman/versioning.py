@@ -1,10 +1,10 @@
-from typing import Any, Callable, Dict, Tuple, TypeVar
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar
 
 CallableT = TypeVar("CallableT", bound=Callable[..., Any])
 
 
 def version(
-    major: int, minor: int = 0, deprecated: bool = None
+    major: int, minor: int = 0, deprecated: Optional[bool] = None
 ) -> Callable[[CallableT], CallableT]:
     """
     Marks an endpoint as available in a specific API version.
@@ -15,7 +15,9 @@ def version(
     """
 
     def decorator(func: CallableT) -> CallableT:
-        versions: Dict[Tuple[int, int], bool] = getattr(func, "_api_versions", {})
+        versions: Dict[Tuple[int, int], Optional[bool]] = getattr(
+            func, "_api_versions", {}
+        )
         versions[(major, minor)] = deprecated
         func._api_versions = versions  # type: ignore
         return func

@@ -3,13 +3,13 @@ from typing import Callable, Dict, Optional, Tuple, Union, cast
 
 from fastapi import APIRouter, FastAPI
 from fastapi.routing import APIRoute
-from starlette.routing import Route
+from starlette.routing import BaseRoute
 
 
 def strict_version_selector(
     major: int, minor: Optional[int] = None
-) -> Callable[[Route], Optional[Route]]:
-    def selector(route: Route) -> Optional[Route]:
+) -> Callable[[BaseRoute], Optional[BaseRoute]]:
+    def selector(route: BaseRoute) -> Optional[BaseRoute]:
         api_route = cast(APIRoute, route)
         versions: Dict[Tuple[int, int], bool] = getattr(
             api_route.endpoint, "_api_versions", {}
@@ -32,8 +32,8 @@ def strict_version_selector(
 def select_routes(
     source: Union[FastAPI, APIRouter],
     destination: Union[FastAPI, APIRouter],
-    selector: Callable[[Route], Optional[Route]] = strict_version_selector,
-):
+    selector: Callable[[BaseRoute], Optional[BaseRoute]],
+) -> None:
     if isinstance(source, FastAPI):
         source = source.router
     if isinstance(destination, FastAPI):

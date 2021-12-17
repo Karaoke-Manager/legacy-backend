@@ -1,11 +1,27 @@
 __all__ = ["Song", "SongKind"]
 
+from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import Field, HttpUrl, confloat, conint
+from pydantic import ConstrainedDecimal, ConstrainedInt, Field, HttpUrl
 
 from .base import BaseSchema
+
+
+class DurationType(ConstrainedDecimal):
+    gt = 0
+    decimal_places = 3
+
+
+class NonZeroInt(ConstrainedInt):
+    gt = 0
+
+
+class RatingType(ConstrainedDecimal):
+    ge = 0
+    le = 10
+    decimal_places = 1
 
 
 class SongKind(str, Enum):
@@ -36,7 +52,7 @@ class Song(BaseSchema):
         "song. This list does not include the main artist.",
         example=["Rihanna"],
     )
-    year: Optional[conint(gt=0)] = Field(
+    year: Optional[NonZeroInt] = Field(
         None, description="The year the song was released.", example=2010
     )
     genre: Optional[str] = Field(
@@ -49,7 +65,7 @@ class Song(BaseSchema):
         "supported.",
         example=SongKind.ultrastar,
     )
-    players: conint(ge=1) = Field(
+    players: NonZeroInt = Field(
         1,
         description="The number of players for this song. Currently only "
         "solos (`1` player) and duets (`2` players) are "
@@ -57,12 +73,12 @@ class Song(BaseSchema):
         example=1,
     )
     # TODO: Should we include the song's lyrics here?
-    duration: Optional[confloat(gt=0)] = Field(
+    duration: Optional[DurationType] = Field(
         None,
         description="The duration of the song in seconds. Note that this "
         "value is **not** guaranteed to be an integer. If the "
         "song's duration is unknown this will be `null`",
-        example=266,
+        example=Decimal(266),
     )
     golden_notes: bool = Field(
         ...,
@@ -99,7 +115,7 @@ class Song(BaseSchema):
         "song does not have one.",
         example="https://.../video",
     )
-    average_rating: Optional[confloat(ge=0, le=10)] = Field(
+    average_rating: Optional[RatingType] = Field(
         None,
         title="Average Rating",
         description="The average user rating for this song (a decimal between "

@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import List
 
 from fastapi import APIRouter, Path
 from fastapi.params import Depends
@@ -29,7 +30,9 @@ detail_router = APIRouter(
     response_model=LimitOffsetPage[schemas.Song],
     response_description="The request was executed successfully.",
 )
-async def get_songs(params: Params = Depends()):
+async def get_songs(
+    params: Params = Depends(),  # type: ignore
+) -> List[schemas.Song]:
     """Lists all songs in the Karman library."""
     raise NotImplementedError
 

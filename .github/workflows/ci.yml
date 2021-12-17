@@ -59,6 +59,7 @@ jobs:
       - name: Run Pytest
         run: poe test --cov --cov-report=xml
       - name: Upload Coverage to Codecov
+        if: "always()"
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
