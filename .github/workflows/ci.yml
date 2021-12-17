@@ -27,9 +27,9 @@ jobs:
       - name: Run flake8
         uses: TrueBrain/actions-flake8@v2
       - name: Run MyPy
-        uses: kolonialno/mypy-action@v1
+        uses: tsuyoshicho/action-mypy@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
   test:
     name: Run Tests
     runs-on: ubuntu-latest
