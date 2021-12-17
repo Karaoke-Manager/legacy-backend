@@ -27,7 +27,7 @@ test = { cmd = "pytest -n auto", help = "Run Tests" }
 clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml", help = "Remove build and cache files" }
 [tool.poe.tasks.lint]
 sequence = [
-    "pflake8", # Runs black and isort as well
+    "flake8", # Runs black and isort as well
     "mypy"
 ]
 default_item_type = "cmd"
@@ -54,13 +54,6 @@ warn_return_any = true
 # Miscellaneous
 warn_unused_configs = true
 
-[tool.flake8]
-exclude = [".git", ".venv", ".mypy_cache", ".pytest_cache"]
-max-line-length = 88
-max-complexity = 10
-select = ["BLK", "I", "C", "E", "F", "W", "B", "B950"]
-ignore = ["E203", "E501", "W503"]
-
 [tool.poetry.dependencies]
 python = "^3.9"
 fastapi = "^0.70.1"
@@ -68,21 +61,21 @@ fastapi-pagination = "^0.9.1"
 uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+uvicorn = "^0.16.0"
 black = "^21.12b0"
 poethepoet = "^0.11.0"
-uvicorn = { version = "^0.16.0", extras = ["standard"] }
 isort = "^5.10.1"
 mypy = "^0.920"
 flake8 = "^4.0.1"
-pyproject-flake8 = "^0.0.1-alpha.2"
 flake8-black = "^0.2.3"
 flake8-isort = "^4.1.1"
-pytest-xdist = "^2.5.0"
-pytest-cov = "^3.0.0"
+pytest = { version = "^6.2.5", optional = true }
+pytest-cov = { version = "^3.0.0", optional = true }
+pytest-xdist = { version = "^2.5.0", optional = true }
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]
+tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [tool.poetry.build]
 generate-setup-file = false

@@ -25,7 +25,7 @@ jobs:
       - name: Install Dependencies
         run: poetry install --no-root
       - name: Run flake8
-        uses: TrueBrain/actions-flake8@master
+        uses: TrueBrain/actions-flake8@v2
       - name: Run MyPy
         uses: kolonialno/mypy-action@v1
         with:
