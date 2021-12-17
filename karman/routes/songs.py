@@ -10,7 +10,7 @@ from karman import schemas
 from karman.versioning import version
 
 router = APIRouter(
-    tags=["songs"],
+    tags=["Songs"],
     responses={
         403: {
             "description": "The request does not have sufficient privileges to "
