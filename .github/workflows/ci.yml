@@ -25,11 +25,16 @@ jobs:
       - name: Install Dependencies
         run: poetry install --no-root
       - name: Run flake8
+        if: "always()"
         uses: TrueBrain/actions-flake8@v2
-      - name: Run MyPy
-        uses: tsuyoshicho/action-mypy@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          error_classes: B,I,C,E,F,W,B
+      - name: Run MyPy
+        if: "always()"
+        uses: liskin/gh-problem-matcher-wrap@v1
+        with:
+          linters: mypy
+          run: mypy --show-column-numbers
   test:
     name: Run Tests
     runs-on: ubuntu-latest
