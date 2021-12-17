@@ -24,7 +24,7 @@ classifiers = [
 [tool.poe.tasks]
 serve = { cmd = "uvicorn karman:app --reload", help = "Runs a development instance" }
 test = { cmd = "pytest -n auto", help = "Run Tests" }
-clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml", help = "Remove build and cache files" }
+clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml .coverage", help = "Remove build and cache files" }
 [tool.poe.tasks.lint]
 sequence = [
     "flake8", # Runs black and isort as well

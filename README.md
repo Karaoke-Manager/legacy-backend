@@ -39,6 +39,26 @@ poe --help
 poetry run poe --help
 ```
 
+## Running Tests
+
+In order to run tests install the required testing dependencies by running
+
+```shell
+poetry install --extras tests
+```
+
+Then run the tests by running
+
+```shell
+poe test
+```
+
+You can also generate a code coverage report by running
+
+```shell
+poe test --cov --cov-report=html
+```
+
 ## Running the Karman API in production
 
 In order to run a production instance of the Karman API you need to run the following commands:
