@@ -1,14 +1,16 @@
-__all__ = ["app"]
+__all__ = ["app", "v1"]
 
 from fastapi import APIRouter, FastAPI
 from starlette.responses import RedirectResponse
 
 from karman.config import app_config
-from karman.main.versioning import select_routes, strict_version_selector
-from karman.routes import songs
+from karman.routes import auth, songs
+from karman.util.openapi import remove_body_schemas
+from karman.versioning import select_routes, strict_version_selector
 
 api = APIRouter()
 api.include_router(songs.router, prefix="/songs")
+api.include_router(auth.router, prefix="/oauth2")
 
 v1 = FastAPI(
     title="Karman API",
@@ -19,6 +21,7 @@ v1 = FastAPI(
     debug=app_config.debug,
 )
 select_routes(api, v1, strict_version_selector(1))
+remove_body_schemas(v1)
 
 app = FastAPI(
     title=app_config.name,
