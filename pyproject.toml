@@ -67,6 +67,7 @@ uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
 pytest = { version = "^6.2.5", optional = true }
 pytest-cov = { version = "^3.0.0", optional = true }
 pytest-xdist = { version = "^2.5.0", optional = true }
+python-multipart = "^0.0.5"
 
 [tool.poetry.dev-dependencies]
 uvicorn = "^0.16.0"

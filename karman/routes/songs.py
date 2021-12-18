@@ -5,6 +5,7 @@ from fastapi import APIRouter, Path
 from fastapi.params import Depends
 from fastapi_pagination import LimitOffsetPage
 from fastapi_pagination.limit_offset import Params
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from karman import schemas
 from karman.versioning import version
