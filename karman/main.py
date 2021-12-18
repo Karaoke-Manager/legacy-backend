@@ -16,7 +16,6 @@ v1 = FastAPI(
     title="Karman API",
     version="1.0",
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
-    root_path_in_servers=False,
     openapi_url="/openapi.json",
     debug=app_config.debug,
 )
@@ -27,7 +26,6 @@ app = FastAPI(
     title=app_config.name,
     version="0.1",
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
-    root_path_in_servers=False,
     openapi_url="/openapi.json",
     debug=app_config.debug,
 )
