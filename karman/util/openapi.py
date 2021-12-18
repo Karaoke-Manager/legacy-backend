@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
@@ -12,7 +14,7 @@ def remove_body_schemas(app: FastAPI) -> None:
     Body_<function>_<path>_<method> which is inconsistent to other schemas.
     """
 
-    def custom_openapi():
+    def custom_openapi() -> Dict[str, Any]:
         if app.openapi_schema:
             return app.openapi_schema
         openapi_schema = get_openapi(
@@ -49,4 +51,4 @@ def remove_body_schemas(app: FastAPI) -> None:
         app.openapi_schema = openapi_schema
         return app.openapi_schema
 
-    app.openapi = custom_openapi
+    app.openapi = custom_openapi  # type: ignore

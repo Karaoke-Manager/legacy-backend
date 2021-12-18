@@ -1,10 +1,8 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, Response
-from fastapi.security import OAuth2PasswordBearer
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
-from karman.auth import oauth2_password_scheme
 from karman.config import app_config
 from karman.schemas.auth import (
     OAuth2ErrorResponse,
@@ -43,7 +41,7 @@ async def login(
         description="You can supply the `client_id` and `client_secret` via HTTP Basic "
         "Auth instead of using the request body.",
     ),
-):
+) -> OAuth2TokenResponse:
     """
     Authenticates a user using `username` and`password`. This endpoint implements the
     [OAuth 2.0 Password Grant](
