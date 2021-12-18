@@ -10,7 +10,7 @@ from karman.versioning import select_routes, strict_version_selector
 
 api = APIRouter()
 api.include_router(songs.router, prefix="/songs")
-api.include_router(auth.router, prefix="/oauth2")
+api.include_router(auth.router)
 
 v1 = FastAPI(
     title="Karman API",

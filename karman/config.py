@@ -5,8 +5,8 @@ class AppConfig:
     name = "Karman API"
     debug = True
 
-    oauth2_path = "oauth2"
-    oauth2_password_endpoint = "login"
+    authorize_endpoint = "authorize"
+    token_endpoint = "token"
 
 
 app_config = AppConfig()
