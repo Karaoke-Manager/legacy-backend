@@ -1,10 +1,10 @@
-from http import HTTPStatus
 from typing import List
 
 from fastapi import APIRouter, Path
 from fastapi.params import Depends
 from fastapi_pagination import LimitOffsetPage
 from fastapi_pagination.limit_offset import Params
+from starlette.status import HTTP_204_NO_CONTENT, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 
 from karman import schemas
 from karman.versioning import version
@@ -12,14 +12,18 @@ from karman.versioning import version
 router = APIRouter(
     tags=["Songs"],
     responses={
-        403: {
+        HTTP_403_FORBIDDEN: {
             "description": "The request does not have sufficient privileges to "
             "be executed."
         }
     },
 )
 detail_router = APIRouter(
-    responses={404: {"description": "No song with the specified `id` was found."}}
+    responses={
+        HTTP_404_NOT_FOUND: {
+            "description": "No song with the specified `id` was found."
+        }
+    }
 )
 
 
@@ -55,7 +59,7 @@ async def get_song(
 @detail_router.delete(
     "/{id}",
     summary="Delete A Song",
-    status_code=HTTPStatus.NO_CONTENT,
+    status_code=HTTP_204_NO_CONTENT,
     response_description="The song was deleted successfully.",
 )
 async def delete_song(
