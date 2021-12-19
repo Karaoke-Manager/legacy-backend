@@ -1,0 +1,8 @@
+[flake8]
+exclude = .git, .venv, .mypy_cache, .pytest_cache
+max-line-length = 88
+max-complexity = 10
+select = BLK,I,C,E,F,W,B,B950
+ignore = E203, E501, W503
+per-file-ignores =
+    __init__.py:F401

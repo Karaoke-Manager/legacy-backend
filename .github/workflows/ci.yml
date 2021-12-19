@@ -25,11 +25,16 @@ jobs:
       - name: Install Dependencies
         run: poetry install --no-root
       - name: Run flake8
-        uses: TrueBrain/actions-flake8@master
-      - name: Run MyPy
-        uses: kolonialno/mypy-action@v1
+        if: "always()"
+        uses: TrueBrain/actions-flake8@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          error_classes: B,I,C,E,F,W,B
+      - name: Run MyPy
+        if: "always()"
+        uses: liskin/gh-problem-matcher-wrap@v1
+        with:
+          linters: mypy
+          run: mypy --show-column-numbers
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -48,10 +53,13 @@ jobs:
           pip install poetry
           poetry config virtualenvs.create false
       - name: Install Dependencies
-        run: poetry install --no-root
+        run: |
+          poetry install --no-root --extras tests
+          pip3 install pytest-github-actions-annotate-failures
       - name: Run Pytest
         run: poe test --cov --cov-report=xml
       - name: Upload Coverage to Codecov
+        if: "always()"
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

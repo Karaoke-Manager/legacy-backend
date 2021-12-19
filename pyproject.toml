@@ -24,10 +24,10 @@ classifiers = [
 [tool.poe.tasks]
 serve = { cmd = "uvicorn karman:app --reload", help = "Runs a development instance" }
 test = { cmd = "pytest -n auto", help = "Run Tests" }
-clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml", help = "Remove build and cache files" }
+clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml .coverage", help = "Remove build and cache files" }
 [tool.poe.tasks.lint]
 sequence = [
-    "pflake8", # Runs black and isort as well
+    "flake8", # Runs black and isort as well
     "mypy"
 ]
 default_item_type = "cmd"
@@ -41,8 +41,8 @@ profile = "black"
 
 [tool.mypy]
 files = ["karman", "tests"]
-show_column_numbers = true
-show_error_context = false
+# TODO: Enable when https://github.com/samuelcolvin/pydantic/pull/3175 is merged
+# plugins = ["pydantic.mypy"]
 # Untyped definitions and calls
 disallow_untyped_defs = true
 # None and Optional handling
@@ -54,35 +54,33 @@ warn_return_any = true
 # Miscellaneous
 warn_unused_configs = true
 
-[tool.flake8]
-exclude = [".git", ".venv", ".mypy_cache", ".pytest_cache"]
-max-line-length = 88
-max-complexity = 10
-select = ["BLK", "I", "C", "E", "F", "W", "B", "B950"]
-ignore = ["E203", "E501", "W503"]
+[tool.pydantic-mypy]
+warn_untyped_fields = true
 
 [tool.poetry.dependencies]
 python = "^3.9"
 fastapi = "^0.70.1"
 fastapi-pagination = "^0.9.1"
+# Uvicorn Optional Dependency
 uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
+# Pytest Optional Dependency
+pytest = { version = "^6.2.5", optional = true }
+pytest-cov = { version = "^3.0.0", optional = true }
+pytest-xdist = { version = "^2.5.0", optional = true }
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+uvicorn = "^0.16.0"
 black = "^21.12b0"
 poethepoet = "^0.11.0"
-uvicorn = { version = "^0.16.0", extras = ["standard"] }
 isort = "^5.10.1"
 mypy = "^0.920"
 flake8 = "^4.0.1"
-pyproject-flake8 = "^0.0.1-alpha.2"
 flake8-black = "^0.2.3"
 flake8-isort = "^4.1.1"
-pytest-xdist = "^2.5.0"
-pytest-cov = "^3.0.0"
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]
+tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [tool.poetry.build]
 generate-setup-file = false

@@ -39,6 +39,26 @@ poe --help
 poetry run poe --help
 ```
 
+## Running Tests
+
+In order to run tests install the required testing dependencies by running
+
+```shell
+poetry install --extras tests
+```
+
+Then run the tests by running
+
+```shell
+poe test
+```
+
+You can also generate a code coverage report by running
+
+```shell
+poe test --cov --cov-report=html
+```
+
 ## Running the Karman API in production
 
 In order to run a production instance of the Karman API you need to run the following commands:
@@ -53,3 +73,7 @@ uvicorn karman:app --host 0.0.0.0 --port 80
 ```
 
 In step 2 we install the runtime dependencies and the `uvicorn` extras. This will install the `uvicorn` ASGI server that can be used to run a production instance of Karman. You can use other ASGI servers such as `hypercorn` as well.
+
+## API Documentation
+
+You can view the OpenAPI specification of the Karman API by running the project locally (see above) and then navigating to http://127.0.0.1:8000/v1/docs or http://127.0.0.1:8000/v1/redoc.
