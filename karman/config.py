@@ -5,5 +5,8 @@ class AppConfig:
     name = "Karman API"
     debug = True
 
+    authorize_endpoint = "authorize"
+    token_endpoint = "token"
+
 
 app_config = AppConfig()
