@@ -58,67 +58,66 @@ class Song(BaseSchema):
     genre: Optional[str] = Field(
         None, description="The genre of the song.", example="Hip-Hop"
     )
-    kind: SongKind = Field(
-        SongKind.ultrastar,
+    kind: str = Field(
+        "ultrastar",
         title="Kind",
-        description="The kind of song. Currently only `ultrastar` songs are "
-        "supported.",
-        example=SongKind.ultrastar,
+        description="The kind of song. Currently only `ultrastar` songs are supported.",
+        regex="ultrastar",
+        example="ultrastar",
     )
     players: NonZeroInt = Field(
         1,
-        description="The number of players for this song. Currently only "
-        "solos (`1` player) and duets (`2` players) are "
-        "supported.",
+        description="The number of players for this song. Currently only solos (`1` "
+        "player) and duets (`2` players) are supported.",
         example=1,
     )
     # TODO: Should we include the song's lyrics here?
     duration: Optional[DurationType] = Field(
         None,
-        description="The duration of the song in seconds. Note that this "
-        "value is **not** guaranteed to be an integer. If the "
-        "song's duration is unknown this will be `null`",
+        description="The duration of the song in seconds. Note that this value is "
+        "**not** guaranteed to be an integer. If the song's duration is unknown this "
+        "will be `null`",
         example=Decimal(266),
     )
     golden_notes: bool = Field(
         ...,
         title="Golden Notes",
-        description="A boolean value indicating whether the song contains "
-        "golden notes.",
+        description="A boolean value indicating whether the song contains golden "
+        "notes.",
         example=True,
     )
     artwork_url: Optional[HttpUrl] = Field(
         None,
         title="Artwork URL",
-        description="An URL pointing to the song's artwork or `null` if the "
-        "song does not have one.",
+        description="An URL pointing to the song's artwork or `null` if the song does "
+        "not have one.",
         example="https://.../artwork",
     )
     background_url: Optional[HttpUrl] = Field(
         None,
         title="Background URL",
-        description="An URL pointing to the song's background image or `null` "
-        "if the song does not have one.",
+        description="An URL pointing to the song's background image or `null` if the "
+        "song does not have one.",
         example="https://.../background",
     )
     audio_url: Optional[HttpUrl] = Field(
         None,
         title="Audio URL",
-        description="An URL pointing to the song's audio file or `null` if the "
-        "song does not have one.",
+        description="An URL pointing to the song's audio file or `null` if the song "
+        "does not have one.",
         example="https://.../audio",
     )
     video_url: Optional[HttpUrl] = Field(
         None,
         title="Video URL",
-        description="An URL pointing to the song's video file or `null` if the "
-        "song does not have one.",
+        description="An URL pointing to the song's video file or `null` if the song "
+        "does not have one.",
         example="https://.../video",
     )
     average_rating: Optional[RatingType] = Field(
         None,
         title="Average Rating",
-        description="The average user rating for this song (a decimal between "
-        "`0` and `10`) or `null` if there are no ratings yet.",
+        description="The average user rating for this song (a decimal between `0` and "
+        "`10`) or `null` if there are no ratings yet.",
         example=8.2,
     )

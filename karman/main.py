@@ -35,4 +35,4 @@ app.mount("/v1", v1)
 # The API root is not currently in use so we redirect to the documentation.
 @app.get("/", include_in_schema=False)
 def redirect_to_docs() -> RedirectResponse:
-    return RedirectResponse("/docs")
+    return RedirectResponse("/v1/docs")
