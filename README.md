@@ -77,3 +77,7 @@ In step 2 we install the runtime dependencies and the `uvicorn` extras. This wil
 ## API Documentation
 
 You can view the OpenAPI specification of the Karman API by running the project locally (see above) and then navigating to http://127.0.0.1:8000/v1/docs or http://127.0.0.1:8000/v1/redoc.
+
+# Configuring pyCharm
+
+![pycharm config](readme_images/pycharm_config.jpeg)
