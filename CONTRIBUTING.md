@@ -4,7 +4,7 @@ Thank you for your interest in contributing to the Karman backend. This guide wi
 
 ## New contributor guide
 
-The Karman project is quite complex in that it consists of multiple independent applications that work closely together. To get an overview of the Karman vision as well as how the different parts tie together, read the README.md in the [Karaoke-Manager/concept](https://github.com/Karaoke-Manager/concept) repository.
+The Karman project is quite complex in that it consists of multiple independent applications that work closely together. To get an overview of the Karman vision as well as how the different parts tie together, read the README.md in the [Karaoke-Manager/karman](https://github.com/Karaoke-Manager/karman) repository.
 
 This contribution guide is concerned only with the Karman backend. To get started with the project, read this project’s [README](README.md).
 
