@@ -1,7 +1,7 @@
 """create song model
 
 Revision ID: 91df67611d87
-Revises: 
+Revises:
 Create Date: 2021-12-27 00:32:24.888557
 
 """
