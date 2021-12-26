@@ -41,6 +41,25 @@ class JsonSettingsSource:
         return {}
 
 
+# FIXME: This requires Pydantic 1.9. The one below is a temporary fix.
+# class SQLiteDsn(AnyUrl):
+#     allowed_schemes = {"sqlite"}
+#     host_required = False
+SQLiteDsn = str
+
+
+class PostgresDsn(AnyUrl):
+    # TODO: Add allowed drivers here
+    allowed_schemes = {"postgres", "postgresql"}
+    user_required = True
+
+
+class MySQLDsn(AnyUrl):
+    # TODO: Add allowed drivers here
+    allowed_schemes = {"mysql", "mariadb"}
+    user_required = True
+
+
 class Settings(BaseSettings):
     """
     The global settings for the Karman API backend.
@@ -94,7 +113,7 @@ class Settings(BaseSettings):
         "additional checks that may impact performance. Also it may display sensitive "
         "debug information when errors occur.",
     )
-    db_url: AnyUrl = Field(
+    db_url: Union[SQLiteDsn, MySQLDsn, PostgresDsn] = Field(
         "sqlite:///db.sqlite",
         title="Database connection string",
         description="A SQLAlchemy database connection URL.",

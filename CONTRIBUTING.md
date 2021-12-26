@@ -136,6 +136,55 @@ This will start a development server of the backend that will allow you to brows
 
 Because we are using FastAPI the Karman backend has an auto-generated API documentation for almost all endpoints. You can open the documentation by running the development server and navigating to http://localhost:8000/v1/docs or http://localhost:8000/v1/redoc. Note the `v1` in the path.
 
+## Database Setup
+
+In order to be able to run the backend you need a database connection. By default Karman is configured to use an SQLite database in the `db.sqlite` file. This is usually fine for development but can be changed via the `db_url` setting.
+
+To work with databases you need the appropriate database drivers. These can be installed as follows:
+
+```shell
+# SQLite (easiest for development)
+poetry install --extras "sqlite"
+# MySQL / MariaDB
+poetry install --extras "mysql"
+# PostgreSQL
+poetry install --extras "postgresql"
+```
+
+### Creating migrations
+
+Whenever you modify a database model we need to migrate the database schema. For this purpose we use [Alembic](https://alembic.sqlalchemy.org). Giving a full introduction into Alembic is outside the scope of this document so we can only cover the most basic cases.
+
+After you make changes to a model, you can automatically create migrations by running the following command:
+
+```shell
+poe makemigration "<message>"
+```
+
+`<message>` is intended for a concise description of the changes made and will be used as part of the migration filename.
+
+In basic cases the auto generated migrations might fine but in many cases it is necessary to edit the migration files manually afterwards.
+
+### Applying migrations
+
+You can apply migrations by running
+
+```shell
+poe migrate [<revision>]
+```
+
+By default all migrations will be applied but you can specifiy a specific revision you want to migrate to. See [Relative Migration Identifiers](https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers) for details.
+
+### Undoing migrations
+
+You can roll back migrations by running
+
+```shell
+poe rollback [<revision>]
+```
+
+By default only a single migration will be rolled back but you can specify a relative or absolute migration identifier to roll back to that specific revision. See [Relative Migration Identifiers](https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers) for details.
+
 ## PyCharm Setup
 
 In this section we give some additional recommendations for setting up a PyCharm based development environment. Other editors and IDEs can probably be configured similarly.

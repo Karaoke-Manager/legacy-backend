@@ -21,6 +21,7 @@ classifiers = [
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/Karaoke-Manager/backend/issues"
 
+
 [tool.poe.tasks]
 serve = { cmd = "uvicorn karman:app --reload", help = "Runs a development instance" }
 test = { cmd = "pytest -n auto --doctest-modules", help = "Run Tests" }
@@ -32,6 +33,18 @@ sequence = [
 ]
 default_item_type = "cmd"
 help = "Checks the code style on the entire project."
+[tool.poe.tasks.makemigration]
+cmd = "alembic revision --autogenerate -m '$message'"
+args = [{ name = "message", positional = true, required = true, help = "A short name or message for the migration." }]
+help = "Create a migration file based on the current database models."
+[tool.poe.tasks.migrate]
+cmd = "alembic upgrade '$revision'"
+args = [{ name = "revision", positional = true, default = "head", help = "The revision to which you want to upgrade." }]
+help = "Applies migrations to the database."
+[tool.poe.tasks.rollback]
+cmd = "alembic downgrade '$revision'"
+args = [{ name = "revision", positional = true, default = "-1", help = "The revision to which you want to rollback. By default the last revision is rolled back." }]
+help = "Rolls back one or more migrations."
 
 [tool.black]
 line-length = 88
@@ -43,6 +56,7 @@ profile = "black"
 files = ["karman", "tests"]
 # TODO: Enable when https://github.com/samuelcolvin/pydantic/pull/3175 is merged
 # plugins = ["pydantic.mypy"]
+plugins = ["sqlmypy"]
 # Untyped definitions and calls
 disallow_untyped_defs = true
 # None and Optional handling
@@ -63,31 +77,37 @@ fastapi = "^0.70.1"
 fastapi-pagination = "^0.9.1"
 python-multipart = "^0.0.5"
 python-dotenv = "^0.19.2"
+orjson = "^3.6.5"
+
+# ORM and Database Drivers
 ormar = "^0.10.23"
-# Uvicorn Optional Dependency
-uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
-# Pytest Optional Dependency
-pytest = { version = "^6.2.5", optional = true }
-pytest-cov = { version = "^3.0.0", optional = true }
-pytest-xdist = { version = "^2.5.0", optional = true }
-# Database Drivers
+alembic = "^1.7.5"
 asyncpg = { version = "^0.25.0", optional = true }
 psycopg2-binary = { version = "^2.9.2", optional = true }
 aiomysql = { version = "^0.0.22", optional = true }
 mysqlclient = { version = "^2.1.0", optional = true }
 aiosqlite = { version = "^0.17.0", optional = true }
-orjson = "^3.6.5"
+
+# Uvicorn Optional Dependency
+uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
+
+# Pytest Optional Dependency
+pytest = { version = "^6.2.5", optional = true }
+pytest-cov = { version = "^3.0.0", optional = true }
+pytest-xdist = { version = "^2.5.0", optional = true }
 
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.11.0"
-uvicorn = "^0.16.0"
+uvicorn = { version = "^0.16.0", extras = ["standard"] }
 black = "^21.12b0"
 isort = "^5.10.1"
-mypy = "^0.930"
 flake8 = "^4.0.1"
 flake8-black = "^0.2.3"
 flake8-isort = "^4.1.1"
+
+mypy = "^0.930"
+sqlalchemy-stubs = "^0.4"
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]
