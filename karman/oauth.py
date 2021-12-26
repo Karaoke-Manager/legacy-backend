@@ -4,8 +4,6 @@ from typing import Dict
 
 from fastapi.security import OAuth2PasswordBearer
 
-from karman.config import app_config
-
 
 class Scope(str, Enum):
     @classmethod
@@ -27,9 +25,12 @@ class Scope(str, Enum):
     # TODO: Add more scopes
 
 
+token_url = "token"
+authorize_url = "authorize"
+
 oauth2_password_scheme = OAuth2PasswordBearer(
     scheme_name="Password Login",
     description="Authenticate against the local Karman user database.",
-    tokenUrl=f"{app_config.token_endpoint}",
+    tokenUrl=f"{token_url}",
     scopes=Scope.all(),
 )

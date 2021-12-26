@@ -3,7 +3,7 @@ from fastapi.routing import APIRoute
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
-from karman.config import app_config
+from karman import oauth
 from karman.schemas.auth import (
     OAuth2AuthorizationRequest,
     OAuth2ErrorResponse,
@@ -33,7 +33,7 @@ router = APIRouter(
 # this API.
 @version(1)
 @router.post(
-    f"/{app_config.token_endpoint}",
+    f"/{oauth.token_url}",
     summary="Login with Username and Password",
     response_model=OAuth2TokenResponse,
     response_description="The response to a successful request contains an "
@@ -72,7 +72,7 @@ def authorize_callback(
 # this API.
 @version(1)
 @router.get(
-    f"/{app_config.authorize_endpoint}",
+    f"/{oauth.authorize_url}",
     summary="Login with an External IdP",
     response_class=RedirectResponse,
     response_description="You will be redirected to the IdP's authentication pages.",
