@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from karman.config import app_config
+from karman.config import settings
 
 
 def to_camel_case(string: str) -> str:
@@ -21,7 +21,7 @@ class BaseSchema(BaseModel):
 
     class Config:
         # Get some extra performance in production by disabling validations
-        validate_all = app_config.debug
-        validate_assignment = app_config.debug
+        validate_all = settings.debug
+        validate_assignment = settings.debug
         allow_population_by_field_name = True
         alias_generator = to_camel_case

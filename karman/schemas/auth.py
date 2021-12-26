@@ -5,8 +5,8 @@ from typing import Optional
 from fastapi import Form, Query
 from pydantic import BaseModel, Field, HttpUrl
 
-from karman.config import app_config
-from karman.security import Scope
+from karman.config import settings
+from karman.oauth import Scope
 
 OAuth2Token = str
 
@@ -174,8 +174,8 @@ class OAuth2TokenResponse(BaseModel):
     )
 
     class Config:
-        validate_all = app_config.debug
-        validate_assignment = app_config.debug
+        validate_all = settings.debug
+        validate_assignment = settings.debug
 
 
 class OAuth2Error(str, Enum):
@@ -209,5 +209,5 @@ class OAuth2ErrorResponse(BaseModel):
     )
 
     class Config:
-        validate_all = app_config.debug
-        validate_assignment = app_config.debug
+        validate_all = settings.debug
+        validate_assignment = settings.debug

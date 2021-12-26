@@ -23,7 +23,7 @@ classifiers = [
 
 [tool.poe.tasks]
 serve = { cmd = "uvicorn karman:app --reload", help = "Runs a development instance" }
-test = { cmd = "pytest -n auto", help = "Run Tests" }
+test = { cmd = "pytest -n auto --doctest-modules", help = "Run Tests" }
 clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml .coverage", help = "Remove build and cache files" }
 [tool.poe.tasks.lint]
 sequence = [
@@ -61,6 +61,7 @@ warn_untyped_fields = true
 python = "^3.9"
 fastapi = "^0.70.1"
 fastapi-pagination = "^0.9.1"
+python-dotenv = "^0.19.2"
 # Uvicorn Optional Dependency
 uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
 # Pytest Optional Dependency
@@ -74,7 +75,7 @@ uvicorn = "^0.16.0"
 black = "^21.12b0"
 poethepoet = "^0.11.0"
 isort = "^5.10.1"
-mypy = "^0.920"
+mypy = "^0.930"
 flake8 = "^4.0.1"
 flake8-black = "^0.2.3"
 flake8-isort = "^4.1.1"
