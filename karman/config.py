@@ -1,11 +1,11 @@
 __all__ = ["settings"]
 
-import json
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
-from pydantic import BaseSettings, Extra, Field
+import orjson
+from pydantic import AnyUrl, BaseSettings, Extra, Field
 from pydantic.env_settings import SettingsSourceCallable
 
 ENV_PREFIX = os.getenv("KARMAN_ENV_PREFIX", "KARMAN_")
@@ -32,13 +32,13 @@ class JsonSettingsSource:
         self.json_file_encoding = json_file_encoding
 
     def __call__(self, settings: BaseSettings) -> Dict[str, Any]:
-        if self.json_file is None:
-            return {}
-        file = Path(self.json_file).expanduser()
-        if file.exists():
-            return json.loads(file.read_text(self.json_file_encoding))  # type: ignore
-        else:
-            return {}
+        if self.json_file:
+            file = Path(self.json_file).expanduser()
+            if file.exists():
+                data = orjson.loads(file.read_text(self.json_file_encoding))
+                assert isinstance(data, dict)
+                return data
+        return {}
 
 
 class Settings(BaseSettings):
@@ -89,10 +89,15 @@ class Settings(BaseSettings):
     )
     debug: bool = Field(
         True,
-        title="Enable Debug Mode",
+        title="Debug Mode Switch",
         description="Enables or disables the debug mode. The debug mode includes some "
         "additional checks that may impact performance. Also it may display sensitive "
         "debug information when errors occur.",
+    )
+    db_url: AnyUrl = Field(
+        "sqlite:///db.sqlite",
+        title="Database connection string",
+        description="A SQLAlchemy database connection URL.",
     )
 
     class Config:
