@@ -1,3 +1,5 @@
+__all__ = ["router"]
+
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.routing import APIRoute
 from starlette.responses import RedirectResponse

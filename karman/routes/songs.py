@@ -1,3 +1,5 @@
+__all__ = ["router"]
+
 from typing import List
 
 from fastapi import APIRouter, Path
