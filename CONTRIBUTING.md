@@ -163,7 +163,14 @@ poe makemigration "<message>"
 
 `<message>` is intended for a concise description of the changes made and will be used as part of the migration filename.
 
-In basic cases the auto generated migrations might fine but in many cases it is necessary to edit the migration files manually afterwards.
+In most cases the auto generated migrations should be fine but in some cases it is necessary to edit the migration files manually afterwards. The [Alembic Docs](https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect) give a list of modifications that are not automatically detected. Some notable examples are:
+
+- Changes of table and column names
+- Some changes to single-column constraints
+
+Addressing these is usually simple, for example using the [`rename_table`](https://alembic.sqlalchemy.org/en/latest/ops.html#alembic.operations.Operations.rename_table) operation in a migration.
+
+If more complex migrations or conditional migrations are necessary these have to be written manually in most cases.
 
 ### Applying migrations
 
