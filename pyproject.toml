@@ -24,7 +24,7 @@ classifiers = [
 
 [tool.poe.tasks]
 serve = { cmd = "uvicorn karman:app --reload", help = "Runs a development instance" }
-test = { cmd = "pytest -n auto --doctest-modules --test-alembic", help = "Run Tests" }
+test = { cmd = "pytest -n auto --doctest-modules", help = "Run Tests" }
 clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml .coverage", help = "Remove build and cache files" }
 [tool.poe.tasks.lint]
 sequence = [
@@ -98,7 +98,6 @@ uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
 pytest = { version = "^6.2.5", optional = true }
 pytest-cov = { version = "^3.0.0", optional = true }
 pytest-xdist = { version = "^2.5.0", optional = true }
-pytest-alembic = { version = "^0.7.0", optional = true }
 
 
 [tool.poetry.dev-dependencies]
@@ -119,7 +118,7 @@ postgresql = ["asyncpg", "psycopg2-binary"]
 postgres = ["asyncpg", "psycopg2-binary"]
 mysql = ["aiomysql", "mysqlclient"]
 sqlite = ["aiosqlite"]
-tests = ["pytest", "pytest-cov", "pytest-xdist", "pytest-alembic"]
+tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [tool.poetry.build]
 generate-setup-file = false
