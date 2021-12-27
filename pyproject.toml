@@ -112,6 +112,7 @@ flake8-isort = "^4.1.1"
 
 mypy = "^0.930"
 sqlalchemy-stubs = "^0.4"
+types-PyYAML = "^6.0.1"
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]

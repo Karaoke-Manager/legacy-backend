@@ -1,6 +1,5 @@
 __all__ = ["settings"]
 
-import logging
 import os
 from logging.config import dictConfig
 from pathlib import Path
@@ -122,7 +121,7 @@ class Settings(BaseSettings):
                 env_settings,
             )
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # Load Default Logging Config
         with open("logging.yml", "r") as file:

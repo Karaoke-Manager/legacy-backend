@@ -5,9 +5,8 @@ version: 1
 formatters:
   default:
     (): "karman.logging.ColorFormatter"
-    style: "{"
-    fmt: "{asctime} | {levelname:>8} | {name}: {message}"
-    color_fmt: "{asctime} | {levelname:>21} | {name} {message}"
+    fmt: "%(asctime)s | %(levelname)8s | %(name)s: %(message)s"
+    color_fmt: "%(asctime)s | %(levelname)21s | %(name)s %(message)s"
     colors:
       asctime: {dim: true}
       levelname: {level: true, bold: true}
@@ -16,9 +15,8 @@ formatters:
       50: {fg: bright_red, blink: true}
   access:
     (): "karman.logging.AccessFormatter"
-    style: "{"
-    fmt: "{asctime} | {levelname:>8} | {client_addr} {method} {full_path} HTTP/{http_version} -> {status_code} {status_phrase}"
-    color_fmt: "{asctime} | {levelname:>21} | {client_addr} {method} {full_path} HTTP/{http_version} -> {status_code} {status_phrase}"
+    fmt: "%(asctime)s | %(levelname)8s | %(client_addr)s %(method)s %(full_path)s HTTP/%(http_version)s -> %(status_code)s %(status_phrase)s"
+    color_fmt: "%(asctime)s | %(levelname)21s | %(client_addr)s %(method)s %(full_path)s HTTP/%(http_version)s -> %(status_code)s %(status_phrase)s"
     colors:
       asctime: {fg: bright_black}
       levelname: { level: true, bold: true }

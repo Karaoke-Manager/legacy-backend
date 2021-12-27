@@ -2,10 +2,10 @@ import http
 import logging
 import sys
 from copy import copy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional, Union
 
 import click
-from uvicorn.logging import TRACE_LOG_LEVEL
+from uvicorn.logging import TRACE_LOG_LEVEL  # type: ignore
 
 
 class ColorFormatter(logging.Formatter):
@@ -22,7 +22,7 @@ class ColorFormatter(logging.Formatter):
         fmt: Optional[str] = None,
         color_fmt: Optional[str] = None,
         datefmt: Optional[str] = None,
-        style: str = "%",
+        style: Union[Literal["%"], Literal["{"], Literal["$"]] = "%",
         use_colors: Optional[bool] = None,
         colors: Optional[Dict[str, Dict[str, Any]]] = None,
         level_colors: Optional[Dict[int, Dict[str, Any]]] = None,
@@ -100,7 +100,7 @@ class ColorFormatter(logging.Formatter):
     def formatMessage(self, record: logging.LogRecord) -> str:
         record_copy = copy(record)
         if self.use_colors:
-            record_copy.reset = click.style("", reset=True)
+            setattr(record_copy, "reset", click.style("", reset=True))
             for key in ["name", "levelname", "asctime", "module", "funcName", "lineno"]:
                 self.colorize(record_copy, key)
             if "color_message" in record_copy.__dict__:
@@ -121,11 +121,11 @@ class AccessFormatter(ColorFormatter):
         fmt: Optional[str] = None,
         color_fmt: Optional[str] = None,
         datefmt: Optional[str] = None,
-        style: str = "%",
+        style: Union[Literal["%"], Literal["{"], Literal["$"]] = "%",
         use_colors: Optional[bool] = None,
         colors: Optional[Dict[str, Dict[str, Any]]] = None,
-        level_colors: Optional[Dict[str, Dict[str, Any]]] = None,
-        status_code_colors: Optional[Dict[str, Dict[str, Any]]] = None,
+        level_colors: Optional[Dict[int, Dict[str, Any]]] = None,
+        status_code_colors: Optional[Dict[int, Dict[str, Any]]] = None,
     ):
         """
         Initializes the formatter. See ``ColorFormatter.init()`` for details.
@@ -151,7 +151,8 @@ class AccessFormatter(ColorFormatter):
     ) -> Dict[str, Any]:
         color = super()._refine_color(record, color)
         if color.pop("status", False):
-            (_, _, _, _, status_code) = record.args
+            status_code: int
+            (_, _, _, _, status_code) = record.args  # type: ignore
             status_code_color = self.status_code_colors.get(status_code, None)
             if status_code_color is None:
                 status_code_color = self.status_code_colors[status_code // 100]
@@ -160,23 +161,24 @@ class AccessFormatter(ColorFormatter):
 
     def formatMessage(self, record: logging.LogRecord) -> str:
         record_copy = copy(record)
+        status_code: int
         (
             client_addr,
             method,
             full_path,
             http_version,
             status_code,
-        ) = record_copy.args
+        ) = record_copy.args  # type: ignore
         try:
             status_phrase = http.HTTPStatus(status_code).phrase
         except ValueError:
             status_phrase = ""
-        record_copy.client_addr = client_addr
-        record_copy.method = method
-        record_copy.full_path = full_path
-        record_copy.http_version = http_version
-        record_copy.status_code = status_code
-        record_copy.status_phrase = status_phrase
+        setattr(record_copy, "client_addr", client_addr)
+        setattr(record_copy, "method", method)
+        setattr(record_copy, "full_path", full_path)
+        setattr(record_copy, "http_version", http_version)
+        setattr(record_copy, "status_code", status_code)
+        setattr(record_copy, "status_phrase", status_phrase)
 
         if self.use_colors:
             for key in [

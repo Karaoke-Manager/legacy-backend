@@ -1,5 +1,3 @@
-from logging.config import dictConfig, fileConfig
-
 from alembic import context
 from sqlalchemy import create_engine, pool
 

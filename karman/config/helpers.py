@@ -16,7 +16,7 @@ class ConfigFileSettingsSource:
 
     def __init__(
         self,
-        file: Sequence[Union[Path, str]] = None,
+        file: Optional[Sequence[Union[Path, str]]] = None,
         encoding: Optional[str] = None,
     ):
         self.file = file if file else []
