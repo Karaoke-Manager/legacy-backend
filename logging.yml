@@ -1,0 +1,65 @@
+# Default Karman Logging Configuration
+# Integrates Uvicorn Logs and SQLAlchemy/Alembic Logs
+version: 1
+
+formatters:
+  default:
+    (): "karman.logging.ColorFormatter"
+    style: "{"
+    fmt: "{asctime} | {levelname:>8} | {name}: {message}"
+    color_fmt: "{asctime} | {levelname:>21} | {name} {message}"
+    colors:
+      asctime: {dim: true}
+      levelname: {level: true, bold: true}
+      name: {fg: bright_black, bold: true}
+    level_colors:
+      50: {fg: bright_red, blink: true}
+  access:
+    (): "karman.logging.AccessFormatter"
+    style: "{"
+    fmt: "{asctime} | {levelname:>8} | {client_addr} {method} {full_path} HTTP/{http_version} -> {status_code} {status_phrase}"
+    color_fmt: "{asctime} | {levelname:>21} | {client_addr} {method} {full_path} HTTP/{http_version} -> {status_code} {status_phrase}"
+    colors:
+      asctime: {fg: bright_black}
+      levelname: { level: true, bold: true }
+      client_addr: {dim: true}
+      method: {bold: true}
+      full_path: {italic: true}
+      status_code: {status: true, bold: true}
+      status_phrase: {status: true, bold: true}
+    level_colors:
+      50: { fg: bright_red, blink: true }
+
+handlers:
+  default:
+    class: logging.StreamHandler
+    formatter: default
+    stream: ext://sys.stderr
+  access:
+    class: logging.StreamHandler
+    formatter: access
+    stream: ext://sys.stdout
+
+loggers:
+  karman:
+    level: INFO
+  karman.api:
+    level: NOTSET
+  karman.auth:
+    level: NOTSET
+  uvicorn:
+    level: INFO
+  uvicorn.access:
+    level: INFO
+    handlers: ["access"]
+    propagate: false
+  uvicorn.error:
+     level: NOTSET
+  sqlalchemy.engine:
+    level: WARN
+  alembic:
+    level: INFO
+
+root:
+  level: WARN
+  handlers: [default]

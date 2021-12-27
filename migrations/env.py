@@ -1,14 +1,10 @@
-from logging.config import fileConfig
+from logging.config import dictConfig, fileConfig
 
 from alembic import context
 from sqlalchemy import create_engine, pool
 
 from karman import models
 from karman.config import settings
-
-# Load alembic.ini and set up Python logging.
-config = context.config
-fileConfig(config.config_file_name)
 
 # Load our MetaData for autogenerate support.
 target_metadata = models.metadata
