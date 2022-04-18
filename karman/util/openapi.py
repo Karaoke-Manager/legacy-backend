@@ -1,3 +1,5 @@
+__all__ = ["remove_body_schemas"]
+
 from typing import Any, Dict
 
 from fastapi import FastAPI
