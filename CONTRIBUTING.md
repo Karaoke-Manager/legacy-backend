@@ -192,6 +192,27 @@ poe rollback [<revision>]
 
 By default only a single migration will be rolled back but you can specify a relative or absolute migration identifier to roll back to that specific revision. See [Relative Migration Identifiers](https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers) for details.
 
+## Logging
+
+Karman uses the default Python `logging` library for its logs. Logging should be configured out of the box but can be customized via the `logging.yml` file in the project directory as well as using the `logging_config` settings value.
+
+If you are implementing a new endpoint or function in Karman you should use logging in appropriate places to make sure that potential errors can be found in production use. Do make use of different logging levels to reduce the number of logs being shown (a lot of logs can impact performance negatively). Please use the following logger names:
+
+- `karman.api`: Logs related to the parsing and processing of API requests.
+- `karman.auth`: Logs related to user and client authentication.
+- `karman.library`: Logs related to library management.
+- *More loger names might be defined in the future.*
+
+Example usage:
+
+```python
+import logging
+logger = logging.getLogger("karman.api")
+logger.info("This is a log message.")
+```
+
+
+
 ## PyCharm Setup
 
 In this section we give some additional recommendations for setting up a PyCharm based development environment. Other editors and IDEs can probably be configured similarly.

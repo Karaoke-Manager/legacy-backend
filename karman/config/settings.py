@@ -1,63 +1,27 @@
 __all__ = ["settings"]
 
 import os
+from logging.config import dictConfig
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
-import orjson
-from pydantic import AnyUrl, BaseSettings, Extra, Field
+import yaml
+from pydantic import BaseSettings, Extra, Field, FilePath
 from pydantic.env_settings import SettingsSourceCallable
 
+from .helpers import ConfigFileSettingsSource, MySQLDsn, PostgresDsn, SQLiteDsn
+
 ENV_PREFIX = os.getenv("KARMAN_ENV_PREFIX", "KARMAN_")
-ENV_FILENAME = os.getenv(f"{ENV_PREFIX}ENV_FILE", ".env")
 ENV_FILE_ENCODING = os.getenv(f"{ENV_PREFIX}ENV_ENCODING")
+ENV_FILENAME = os.getenv(f"{ENV_PREFIX}ENV_FILE", ".env")
 SECRETS_DIR = os.getenv(f"{ENV_PREFIX}SECRETS_DIR", "/run/secrets")
-JSON_FILENAME = os.getenv(f"{ENV_PREFIX}CONFIG", "config.json")
-JSON_FILE_ENCODING = os.getenv(f"{ENV_PREFIX}CONFIG_ENCODING")
-
-
-class JsonSettingsSource:
-    """
-    A simple configuration source reading from a JSON file.
-    """
-
-    __slots__ = ("json_file", "json_file_encoding")
-
-    def __init__(
-        self,
-        json_file: Union[Path, str, None] = None,
-        json_file_encoding: Optional[str] = None,
-    ):
-        self.json_file = json_file
-        self.json_file_encoding = json_file_encoding
-
-    def __call__(self, settings: BaseSettings) -> Dict[str, Any]:
-        if self.json_file:
-            file = Path(self.json_file).expanduser()
-            if file.exists():
-                data = orjson.loads(file.read_text(self.json_file_encoding))
-                assert isinstance(data, dict)
-                return data
-        return {}
-
-
-# FIXME: This requires Pydantic 1.9. The one below is a temporary fix.
-# class SQLiteDsn(AnyUrl):
-#     allowed_schemes = {"sqlite"}
-#     host_required = False
-SQLiteDsn = str
-
-
-class PostgresDsn(AnyUrl):
-    # TODO: Add allowed drivers here
-    allowed_schemes = {"postgres", "postgresql"}
-    user_required = True
-
-
-class MySQLDsn(AnyUrl):
-    # TODO: Add allowed drivers here
-    allowed_schemes = {"mysql", "mariadb"}
-    user_required = True
+CONFIG_FILE_ENCODING = os.getenv(f"{ENV_PREFIX}CONFIG_ENCODING")
+CONFIG_FILENAMES = [
+    filename.strip()
+    for filename in os.getenv(
+        f"{ENV_PREFIX}CONFIG", "config.yaml,config.yml,config.json"
+    ).split(",")
+]
 
 
 class Settings(BaseSettings):
@@ -81,7 +45,7 @@ class Settings(BaseSettings):
     1. A .env file
     2. Environment variables
     3. Secrets folder
-    4. A JSON configuration file
+    4. A JSON or YAML configuration file
 
     Chosing Config Sources
     ======================
@@ -98,20 +62,29 @@ class Settings(BaseSettings):
         A directory containing files that are named like the configuration values (with
         the configured prefix). The content of the files is used as configuration value.
     ``{prefix}CONFIG`` and ``{prefix}CONFIG_ENCODING``
-        The path and encoding of a JSON file containing configuration values.
-        Default: ``config.json``
+        The path and encoding of a JSON or YAML file containing configuration values.
+        You can specify multiple comma-separated values. The first file found will be
+        used. Multiple files will not be merged.
+        Default: ``config.yaml,config.yml,config.json``
     """
 
-    app_name: str = Field(
-        "Karman API",
-        description="The name of the application. This value may be visible in the UI.",
-    )
     debug: bool = Field(
         True,
         title="Debug Mode Switch",
         description="Enables or disables the debug mode. The debug mode includes some "
         "additional checks that may impact performance. Also it may display sensitive "
         "debug information when errors occur.",
+    )
+    logging_config: Union[FilePath, Dict[str, Any], None] = Field(
+        None,
+        title="Logging Configuration",
+        description="Either the path to a JSON or YAML file according to the Logging "
+        "Config Dict Schema or an embedded dictionary that is used to configure "
+        "logging.",
+    )
+    app_name: str = Field(
+        "Karman API",
+        description="The name of the application. This value may be visible in the UI.",
     )
     db_url: Union[SQLiteDsn, MySQLDsn, PostgresDsn] = Field(
         "sqlite:///db.sqlite",
@@ -128,10 +101,10 @@ class Settings(BaseSettings):
 
         env_prefix = ENV_PREFIX
         env_nested_delimiter = "__"
-        env_file = ENV_FILENAME
         env_file_encoding = ENV_FILE_ENCODING
-        json_file = JSON_FILENAME
-        json_file_encoding = JSON_FILE_ENCODING
+        env_file = ENV_FILENAME
+        config_file_encoding = CONFIG_FILE_ENCODING
+        config_files = CONFIG_FILENAMES
         secrets_dir = SECRETS_DIR if Path(SECRETS_DIR).exists() else None
 
         @classmethod
@@ -143,10 +116,26 @@ class Settings(BaseSettings):
         ) -> Tuple[SettingsSourceCallable, ...]:
             return (
                 init_settings,
-                JsonSettingsSource(cls.json_file, cls.json_file_encoding),
+                ConfigFileSettingsSource(cls.config_files, cls.config_file_encoding),
                 file_secret_settings,
                 env_settings,
             )
+
+    def __init__(self) -> None:
+        super().__init__()
+        # Load Default Logging Config
+        with open("logging.yml", "r") as file:
+            dictConfig(yaml.safe_load(file))
+        # Load User Logging Config
+        if isinstance(self.logging_config, dict):
+            logging_config = self.logging_config
+        elif isinstance(self.logging_config, Path):
+            with self.logging_config.open("r") as file:
+                logging_config = yaml.safe_load(file)
+        else:
+            logging_config = None
+        if logging_config:
+            dictConfig(logging_config)
 
 
 settings = Settings()

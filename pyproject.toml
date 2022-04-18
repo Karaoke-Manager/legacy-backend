@@ -23,7 +23,7 @@ classifiers = [
 
 
 [tool.poe.tasks]
-serve = { cmd = "uvicorn karman:app --reload", help = "Runs a development instance" }
+serve = { cmd = "uvicorn karman:app --reload --log-config=logging.yml", help = "Runs a development instance" }
 test = { cmd = "pytest -n auto --doctest-modules", help = "Run Tests" }
 clean = { cmd = "rm -rf .mypy_cache .pytest_cache htmlcov coverage.xml .coverage", help = "Remove build and cache files" }
 [tool.poe.tasks.lint]
@@ -81,6 +81,7 @@ fastapi-pagination = "^0.9.1"
 python-multipart = "^0.0.5"
 python-dotenv = "^0.19.2"
 orjson = "^3.6.5"
+PyYAML = "^6.0"
 
 # ORM and Database Drivers
 ormar = "^0.10.23"
@@ -111,6 +112,7 @@ flake8-isort = "^4.1.1"
 
 mypy = "^0.930"
 sqlalchemy-stubs = "^0.4"
+types-PyYAML = "^6.0.1"
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]
