@@ -1,10 +1,11 @@
 __all__ = ["app", "v1"]
 
 from fastapi import APIRouter, FastAPI
+from fastapi import HTTPException as FastAPIHTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import Request
 from starlette.responses import JSONResponse, RedirectResponse
-from starlette.status import HTTP_405_METHOD_NOT_ALLOWED
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED
 
 from karman.config import settings
 from karman.exceptions import HTTPException
@@ -23,10 +24,49 @@ v1 = FastAPI(
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
     openapi_url="/openapi.json",
     debug=settings.debug,
+    servers=[{"url": "/v1"}],
 )
 select_routes(api, v1, strict_version_selector(1))
 remove_body_schemas(v1)
 remove_hidden_responses(v1)
+
+
+@v1.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exception: HTTPException):
+    content = {"code": exception.error_code, "message": exception.message}
+    if exception.detail:
+        content["detail"] = exception.detail
+    return JSONResponse(
+        status_code=exception.status_code, content=content, headers=exception.headers
+    )
+
+
+@v1.exception_handler(StarletteHTTPException)
+async def starlette_http_exception_handler(
+    request: Request, exception: StarletteHTTPException
+):
+    # Catch automatically generated exceptions
+    if exception.status_code == HTTP_404_NOT_FOUND:
+        content = {
+            "code": "apiNotFound",
+            "message": "This API endpoint does not exist.",
+        }
+    elif exception.status_code == HTTP_405_METHOD_NOT_ALLOWED:
+        content = {
+            "code": "methodNotAllowed",
+            "message": f"This endpoint does not respond to {request.method} requests.",
+        }
+    else:
+        content = {"code": "unknown", "message": "an unknown error occurred."}
+    if exception.detail:
+        content["detail"] = exception.detail
+
+    return JSONResponse(
+        status_code=exception.status_code,
+        content=content,
+        headers=getattr(exception, "headers", {}),
+    )
+
 
 app = FastAPI(
     title=settings.app_name,
@@ -36,27 +76,6 @@ app = FastAPI(
     debug=settings.debug,
 )
 app.mount("/v1", v1)
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exception: HTTPException):
-    content = {"code": exception.error_code, "message": exception.message}
-    if exception.detail:
-        content["detail"] = exception.detail
-    return JSONResponse(
-        status_code=exception.status_code,
-        content=content,
-    )
-
-
-@app.exception_handler(StarletteHTTPException)
-async def starlette_http_exception_handler(
-    request: Request, exception: StarletteHTTPException
-):
-    content = {"code": "unknown", "message": "an unknown error occurred."}
-    if exception.detail:
-        content["detail"] = exception.detail
-    return JSONResponse(status_code=exception.status_code, content=content)
 
 
 # The API root is not currently in use so we redirect to the documentation.

@@ -1,11 +1,13 @@
 __all__ = ["settings"]
 
 import os
+from datetime import timedelta
 from logging.config import dictConfig
 from pathlib import Path
 from typing import Any, Dict, Tuple, Union
 
 import yaml
+from jose.constants import Algorithms
 from pydantic import BaseSettings, Extra, Field, FilePath
 from pydantic.env_settings import SettingsSourceCallable
 
@@ -90,6 +92,28 @@ class Settings(BaseSettings):
         "sqlite:///db.sqlite",
         title="Database connection string",
         description="A SQLAlchemy database connection URL.",
+    )
+    jwt_issuer: str = Field(
+        "Karman",
+        title="Issuer of JWT access tokens.",
+        description="The issuer is included in tokens and can be used to differentiate "
+        "tokens issued by different installations.",
+    )
+    jwt_algorithm: str = Field(
+        Algorithms.HS256,
+        title="JWT Algorithm",
+        description="Signing algorithm used for OAuth2 access tokens.",
+    )
+    jwt_secret_key: str = Field(
+        "jdksajdkashfaksfjlahdslkashdklas",
+        min_length=20,
+        title="JWT Secret Key",
+        description="A secret value used to encode and decode access tokens.",
+    )
+    jwt_validity_period: timedelta = Field(
+        default=timedelta(minutes=60),
+        title="JWT Validity Period",
+        description="The duration for which an access token is valid.",
     )
 
     class Config:

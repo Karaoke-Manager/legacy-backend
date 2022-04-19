@@ -1,17 +1,18 @@
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
-from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi import HTTPException as FastAPIHTTPException
 
 
-class HTTPException(StarletteHTTPException):
+class HTTPException(FastAPIHTTPException):
     def __init__(
         self,
         status_code: int,
         error_code: str,
         message: str,
         detail: Optional[Any] = None,
+        headers: Optional[Dict[str, Any]] = None,
     ):
-        super().__init__(status_code=status_code, detail=detail)
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
         self.error_code = error_code
         self.message = message
 

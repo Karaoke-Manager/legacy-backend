@@ -1,10 +1,12 @@
 __all__ = ["router"]
 
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute, Request
+from ormar import NoMatch
 from pydantic import HttpUrl
 from starlette.responses import JSONResponse, RedirectResponse
 from starlette.status import (
@@ -17,6 +19,8 @@ from starlette.status import (
 
 from karman import oauth
 from karman.exceptions import HTTPException
+from karman.models import User
+from karman.oauth import Scope, Scopes, create_access_token, verify_password
 from karman.schemas.oauth import (
     OAuth2AuthorizationRequest,
     OAuth2ErrorResponse,
@@ -52,7 +56,7 @@ async def handle_request_validation_error(
         field = error["loc"][-1]
         message = error["msg"]
         error_type = error["type"]
-        if field == "scope" and error_type == "value_error":
+        if field == "scope":
             return JSONResponse(
                 status_code=HTTP_400_BAD_REQUEST,
                 content={"error": "invalid_scope", "error_description": message},
@@ -86,6 +90,7 @@ router = APIRouter(
     f"/{oauth.token_url}",
     summary="Get an access token",
     response_model=OAuth2TokenResponse,
+    response_model_exclude_none=True,
     response_description="The response to a successful request contains an "
     "`access_token` and optionally a `refresh_token`.",
     responses={
@@ -125,9 +130,22 @@ async def token(
                 error_code="invalid_request",
                 message="username and password required.",
             )
-        if data.username == "username" and data.password == "password":
-            pass
-        else:
+        try:
+            user = await User.objects.get(username=data.username)
+            if not verify_password(data.password, user.password):
+                # technically not the correct exception but works well here
+                raise NoMatch
+            # TODO: Use and validate client_id
+            client_id = "fake"
+            # TODO: Use correct scopes
+            scopes = Scopes({Scope.ALL})
+            bearer, claims = create_access_token(user, "fake", scopes)
+            return OAuth2TokenResponse(
+                access_token=bearer,
+                expires_in=claims.valid_until - claims.issued_at,
+                scope=claims.scope,
+            )
+        except NoMatch as e:
             raise HTTPException(
                 status_code=HTTP_401_UNAUTHORIZED,
                 error_code="invalid_request",

@@ -1,5 +1,5 @@
 __all__ = [
-    "OAuth2Token",
+    "OAuth2AccessToken",
     "OAuth2ResponseType",
     "OAuth2AuthorizationRequest",
     "OAuth2TokenRequest",
@@ -16,34 +16,8 @@ from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel, Field, HttpUrl
 
 from karman.config import settings
-from karman.oauth import OAuth2Token, Scope
+from karman.oauth import BearerToken, OAuth2AccessToken, Scope, Scopes
 from karman.util.auth import decode_basic_auth
-
-
-class Scopes(Set[Scope]):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def __modify_schema__(cls, field_schema: dict):
-        field_schema.clear()
-        field_schema["type"] = "string"
-
-    @classmethod
-    def validate(cls, value: Any):
-        if isinstance(value, str):
-            return cls(Scope(v) for v in value.split(" "))
-        elif isinstance(value, Iterable):
-            return cls(Scope(v) for s in value for v in s.split(" "))
-        raise TypeError("string required")
-
-    @classmethod
-    def __serialize__(cls, value: "Scopes"):
-        return value.serialize()
-
-    def serialize(self):
-        return " ".join(self)
 
 
 class OAuth2ResponseType(str, Enum):
@@ -185,7 +159,7 @@ class OAuth2TokenRequest:
 class OAuth2TokenResponse(BaseModel):
     """A response from the OAuth 2.0 Token endpoint returning a token."""
 
-    access_token: OAuth2Token = Field(
+    access_token: BearerToken = Field(
         ...,
         description="The access token string as issued by the authorization server.",
     )
@@ -200,7 +174,7 @@ class OAuth2TokenResponse(BaseModel):
         " returned the token may still expire after some time.",
         example=3600,
     )
-    refresh_token: Optional[OAuth2Token] = Field(
+    refresh_token: Optional[BearerToken] = Field(
         None,
         description="The server may return a refresh token that can be used to request "
         "a new access token after this one expires.",
@@ -216,7 +190,7 @@ class OAuth2TokenResponse(BaseModel):
         validate_assignment = settings.debug
         # Include the custom encoder here until this issue is solved:
         # https://github.com/samuelcolvin/pydantic/issues/951
-        json_encoders = {Scopes: Scopes.__serialize__}
+        json_encoders = {Scopes: str}
 
 
 class OAuth2ErrorResponse(BaseModel):

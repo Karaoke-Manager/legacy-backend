@@ -1,8 +1,8 @@
 from .oauth import (
+    OAuth2AccessToken,
     OAuth2AuthorizationRequest,
     OAuth2ErrorResponse,
     OAuth2ResponseType,
-    OAuth2Token,
     OAuth2TokenRequest,
     OAuth2TokenResponse,
 )
