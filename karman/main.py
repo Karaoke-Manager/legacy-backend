@@ -1,16 +1,21 @@
 __all__ = ["app", "v1"]
 
 from fastapi import APIRouter, FastAPI
-from starlette.responses import RedirectResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
+from starlette.responses import JSONResponse, RedirectResponse
+from starlette.status import HTTP_405_METHOD_NOT_ALLOWED
 
 from karman.config import settings
-from karman.routes import auth, songs
-from karman.util.openapi import remove_body_schemas
+from karman.exceptions import HTTPException
+from karman.routes import oauth, songs, users
+from karman.util.openapi import remove_body_schemas, remove_hidden_responses
 from karman.versioning import select_routes, strict_version_selector
 
 api = APIRouter()
+api.include_router(oauth.router)
+api.include_router(users.router, prefix="/users")
 api.include_router(songs.router, prefix="/songs")
-api.include_router(auth.router)
 
 v1 = FastAPI(
     title="Karman API",
@@ -21,6 +26,7 @@ v1 = FastAPI(
 )
 select_routes(api, v1, strict_version_selector(1))
 remove_body_schemas(v1)
+remove_hidden_responses(v1)
 
 app = FastAPI(
     title=settings.app_name,
@@ -30,6 +36,27 @@ app = FastAPI(
     debug=settings.debug,
 )
 app.mount("/v1", v1)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exception: HTTPException):
+    content = {"code": exception.error_code, "message": exception.message}
+    if exception.detail:
+        content["detail"] = exception.detail
+    return JSONResponse(
+        status_code=exception.status_code,
+        content=content,
+    )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def starlette_http_exception_handler(
+    request: Request, exception: StarletteHTTPException
+):
+    content = {"code": "unknown", "message": "an unknown error occurred."}
+    if exception.detail:
+        content["detail"] = exception.detail
+    return JSONResponse(status_code=exception.status_code, content=content)
 
 
 # The API root is not currently in use so we redirect to the documentation.

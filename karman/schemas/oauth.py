@@ -2,24 +2,48 @@ __all__ = [
     "OAuth2Token",
     "OAuth2ResponseType",
     "OAuth2AuthorizationRequest",
-    "OAuth2GrantType",
-    "OAuth2TokenRequestForm",
+    "OAuth2TokenRequest",
     "OAuth2TokenResponse",
-    "OAuth2Error",
     "OAuth2ErrorResponse",
 ]
 
 from datetime import timedelta
 from enum import Enum
-from typing import Optional
+from typing import Any, Iterable, Optional, Set
 
-from fastapi import Form, Query
+from fastapi import Form, Header, Query
+from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel, Field, HttpUrl
 
 from karman.config import settings
-from karman.oauth import Scope
+from karman.oauth import OAuth2Token, Scope
+from karman.util.auth import decode_basic_auth
 
-OAuth2Token = str
+
+class Scopes(Set[Scope]):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema: dict):
+        field_schema.clear()
+        field_schema["type"] = "string"
+
+    @classmethod
+    def validate(cls, value: Any):
+        if isinstance(value, str):
+            return cls(Scope(v) for v in value.split(" "))
+        elif isinstance(value, Iterable):
+            return cls(Scope(v) for s in value for v in s.split(" "))
+        raise TypeError("string required")
+
+    @classmethod
+    def __serialize__(cls, value: "Scopes"):
+        return value.serialize()
+
+    def serialize(self):
+        return " ".join(self)
 
 
 class OAuth2ResponseType(str, Enum):
@@ -53,52 +77,47 @@ class OAuth2AuthorizationRequest:
         ),
         redirect_uri: HttpUrl = Query(
             ...,
-            description="The URL where we redirect to after the login process completes.",
+            description="The URL where we redirect to after the login process "
+            "completes.",
             example="https://example.com/oauth-callback",
         ),
-        scope: str = Query(
-            "", description="A list of scopes that your application requests."
+        scope: Optional[Scopes] = Query(
+            None,
+            description="A list of scopes that your application requests.",
         ),
         state: Optional[str] = Query(
             None,
-            description="An arbitrary string value that allows you to correlate the login "
-            "request with the response.",
+            description="An arbitrary string value that allows you to correlate the "
+            "login request with the response.",
         ),
     ):
         self.connection = connection
         self.client_id = client_id
         self.response_type = response_type
         self.redirect_uri = redirect_uri
-        self.scope = [Scope(v) for v in scope.split()]
+        self.scope = scope
         self.state = state
-
-
-class OAuth2GrantType(str, Enum):
-    """Possible values for OAuth 2 grant type"""
-
-    AUTHORIZATION_CODE = "authorization_code"
-    CLIENT_CREDENTIALS = "client_credentials"
-    IMPLICIT = "implicit"
-    PASSWORD = "password"
-    REFRESH_TOKEN = "refresh_token"
 
 
 # Note: This schema is compliant with the OAuth 2 token endpoint schema. We currently do
 # not implement the OAuth spec completely but may do so in the future.
-class OAuth2TokenRequestForm:
-    """
-    This subclass of `OAuth2PasswordRequestForm` can be used exactly as the original. It
-    only adds OpenAPI documentation.
-    """
-
+class OAuth2TokenRequest:
     def __init__(
         self,
-        grant_type: OAuth2GrantType = Form(
+        grant_type: str = Form(
             ...,
             description="The OAuth 2.0 grant type.",
-            example=OAuth2GrantType.PASSWORD,
+            example="authorization_code",
         ),
-        scope: str = Form("", description="The OAuth scopes that are being requested."),
+        scope: Optional[Scopes] = Form(
+            None, description="The OAuth scopes that are being requested."
+        ),
+        authorization: Optional[str] = Header(
+            None,
+            description="The client id and client secret can be passed via HTTP basic "
+            "auth. This takes precedence over parameters specified in the request "
+            "body.",
+        ),
         client_id: str = Form(
             None,
             description="Unique identifier of the client application.",
@@ -109,13 +128,13 @@ class OAuth2TokenRequestForm:
         ),
         # Password Flow
         username: Optional[str] = Form(
-            ...,
+            None,
             description="The username of the user that attempts to log in. Required if "
             "`grant_type` is `password`.",
             example="johndoe",
         ),
         password: Optional[str] = Form(
-            ...,
+            None,
             description="The plain text password of the user `username`. Required if "
             "`grant_type` is `password`.",
             example="hunter2",
@@ -143,10 +162,18 @@ class OAuth2TokenRequestForm:
             "token`.",
         ),
     ):
+        scheme, param = get_authorization_scheme_param(authorization)
+
         self.grant_type = grant_type
-        self.scopes = [Scope(v) for v in scope.split()]
+        self.scope = scope
         self.client_id = client_id
         self.client_secret = client_secret
+        if authorization:
+            try:
+                self.client_id, self.client_secret = decode_basic_auth(authorization)
+            except ValueError:
+                self.client_id = None
+                self.client_secret = None
         self.username = username
         self.password = password
         self.code = code
@@ -178,7 +205,7 @@ class OAuth2TokenResponse(BaseModel):
         description="The server may return a refresh token that can be used to request "
         "a new access token after this one expires.",
     )
-    scope: Optional[str] = Field(
+    scope: Optional[Scopes] = Field(
         None,
         description="The scope that was granted to the token. May be omitted if "
         "the granted scopes are identical to the requested scopes.",
@@ -187,26 +214,18 @@ class OAuth2TokenResponse(BaseModel):
     class Config:
         validate_all = settings.debug
         validate_assignment = settings.debug
-
-
-class OAuth2Error(str, Enum):
-    """Possible error code for OAuth 2 authentication."""
-
-    INVALID_REQUEST = "invalid_request"
-    INVALID_CLIENT = "invalid_client"
-    INVALID_GRANT = "invalid_grant"
-    INVALID_SCOPE = "invalid_scope"
-    UNAUTHORIZED_CLIENT = "unauthorized_client"
-    UNSUPPORTED_GRANT_TYPE = "unsupported_grant_type"
+        # Include the custom encoder here until this issue is solved:
+        # https://github.com/samuelcolvin/pydantic/issues/951
+        json_encoders = {Scopes: Scopes.__serialize__}
 
 
 class OAuth2ErrorResponse(BaseModel):
     """A response from the OAuth 2.0 token endpoint returning an error."""
 
-    error: OAuth2Error = Field(
+    error: str = Field(
         ...,
         description="The type of error that occurred.",
-        example=OAuth2Error.INVALID_REQUEST,
+        example="invalid_request",
     )
     error_description: Optional[str] = Field(
         None,
