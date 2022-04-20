@@ -37,3 +37,13 @@ class BaseSchema(BaseModel):
         json_dumps = orjson_dumps
         allow_population_by_field_name = True
         alias_generator = to_camel_case
+
+
+class BaseModelSchema(BaseSchema):
+    """
+    The ``BseModelSchema`` should be used as superclass for all Karman schemas
+    representing database models. This pydantic model has the `orm_mode` enabled.
+    """
+
+    class Config(BaseSchema.Config):
+        orm_mode = True

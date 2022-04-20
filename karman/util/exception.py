@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Coroutine, Dict, Type
+from typing import Any, Callable, Coroutine, Dict, Optional, Type
 
 from fastapi.routing import APIRoute, Request, Response
 from starlette.concurrency import run_in_threadpool
@@ -8,7 +8,7 @@ from starlette.concurrency import run_in_threadpool
 class ErrorHandlingAPIRoute(APIRoute):
     exception_handlers: Dict[Type, Callable]
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         cls.exception_handlers = {}
 
@@ -29,7 +29,11 @@ class ErrorHandlingAPIRoute(APIRoute):
         cls.exception_handlers[exc_class] = handler
 
     @classmethod
-    def _lookup_exception_handler(cls, exc: Exception) -> Callable | None:
+    def _lookup_exception_handler(
+        cls, exc: Exception
+    ) -> Optional[
+        Callable[[Request, Exception], Response | Coroutine[Any, Any, Response]]
+    ]:
         for exc_cls in type(exc).__mro__:
             if exc_cls in cls.exception_handlers:
                 return cls.exception_handlers[exc_cls]
@@ -46,9 +50,10 @@ class ErrorHandlingAPIRoute(APIRoute):
                 if handler is None:
                     raise exc
                 if asyncio.iscoroutinefunction(handler):
-                    response = await handler(request, exc)
+                    return await handler(request, exc)  # type: ignore
                 else:
-                    response = await run_in_threadpool(handler, request, exc)
-                return response
+                    return await run_in_threadpool(
+                        handler, request, exc  # type: ignore
+                    )
 
         return custom_route_handler

@@ -2,10 +2,10 @@ from typing import Any, Dict
 
 from pydantic import Field
 
-from .base import BaseSchema
+from .base import BaseModelSchema
 
 
-class User(BaseSchema):
+class User(BaseModelSchema):
     """
     A user represents a human being accessing the API through a client application.
     """

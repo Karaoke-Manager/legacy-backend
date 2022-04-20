@@ -5,7 +5,9 @@ from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
+    Generator,
     Iterable,
     Optional,
     Set,
@@ -58,7 +60,7 @@ class Scope(str, Enum):
             raise ValueError('Scope values may not contain a literal "')
         return obj
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}.{self._name_}"
 
     ALL = ("all", "Includes all other scopes. Use with caution.")
@@ -69,29 +71,30 @@ class Scope(str, Enum):
 
 class Scopes(Set[Scope]):
     @classmethod
-    def __get_validators__(cls):
+    def __get_validators__(cls) -> Generator[Callable[[Any], "Scopes"], None, None]:
         yield cls.validate
 
     @classmethod
-    def __modify_schema__(cls, field_schema: dict):
+    def __modify_schema__(cls, field_schema: "DictStrAny") -> None:
         field_schema.clear()
         field_schema["type"] = "string"
 
+    # TODO: Use 'Self' annotation instead in Python 3.11
     @classmethod
-    def validate(cls, value: Any):
+    def validate(cls, value: Any) -> "Scopes":
         if isinstance(value, str):
             return cls(Scope(v) for v in value.split(" "))
         elif isinstance(value, Iterable):
             return cls(Scope(v) for s in value for v in s.split(" "))
         raise TypeError("string required")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "{" + ", ".join(self) + "}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.serialize()
 
-    def serialize(self):
+    def serialize(self) -> str:
         return " ".join(self)
 
 
@@ -124,7 +127,9 @@ class OAuth2AccessToken(BaseModel):
     scope: Scopes = Field(..., description="Scopes associated with this token.")
 
     @validator("valid_until")
-    def __validate_expiration(cls, v, values, **kwargs):
+    def __validate_expiration(
+        cls, v: datetime, values: "DictStrAny", **kwargs: Any
+    ) -> datetime:
         if v is not None:
             return v
         if "issued_at" in values:
@@ -135,20 +140,20 @@ class OAuth2AccessToken(BaseModel):
     def dict(
         self,
         *,
-        include: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
-        exclude: Union["AbstractSetIntStr", "MappingIntStrAny"] = None,
+        include: Union["AbstractSetIntStr", "MappingIntStrAny", None] = None,
+        exclude: Union["AbstractSetIntStr", "MappingIntStrAny", None] = None,
         by_alias: bool = False,
-        skip_defaults: bool = None,
+        skip_defaults: Optional[bool] = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
         encode: bool = False,
     ) -> "DictStrAny":
         data = super().dict(
-            include=include,
-            exclude=exclude,
+            include=include,  # type: ignore
+            exclude=exclude,  # type: ignore
             by_alias=by_alias or encode,
-            skip_defaults=skip_defaults,
+            skip_defaults=skip_defaults,  # type: ignore
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
@@ -202,7 +207,7 @@ oauth_scheme = OAuth2Bearer(
 
 
 @lru_cache
-def get_crypt_context():
+def get_crypt_context() -> CryptContext:
     """
     Returns the password `CryptContext` used to hash passwords.
     """
@@ -211,12 +216,12 @@ def get_crypt_context():
 
 def hash_password(password: str) -> str:
     context = get_crypt_context()
-    return context.hash(password)
+    return str(context.hash(password))
 
 
-def verify_password(password, pw_hash):
+def verify_password(password: str, pw_hash: str) -> str:
     context = get_crypt_context()
-    return context.verify(password, pw_hash)
+    return str(context.verify(password, pw_hash))
 
 
 def create_access_token(
@@ -272,6 +277,7 @@ async def get_access_token(
         access_token = OAuth2AccessToken(**claims)
         if Scope.ALL in access_token.scope:
             return access_token
+        scope: str
         for scope in required_scopes:
             while scope not in access_token.scope:
                 scope, separator, _ = scope.rpartition(":")
@@ -297,7 +303,7 @@ async def get_access_token(
                 f'scope="{str(required_scopes)}"'
             },
         )
-    except (JWTError, ValidationError) as e:
+    except (JWTError, ValidationError):
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
             error_code="invalidToken",

@@ -1,10 +1,9 @@
 __all__ = ["app", "v1"]
 
 from fastapi import APIRouter, FastAPI
-from fastapi import HTTPException as FastAPIHTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import Request
-from starlette.responses import JSONResponse, RedirectResponse
+from starlette.responses import JSONResponse, RedirectResponse, Response
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED
 
 from karman.config import settings
@@ -32,19 +31,23 @@ remove_hidden_responses(v1)
 
 
 @v1.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exception: HTTPException):
+async def http_exception_handler(
+    request: Request, exception: HTTPException
+) -> Response:
     content = {"code": exception.error_code, "message": exception.message}
     if exception.detail:
         content["detail"] = exception.detail
     return JSONResponse(
-        status_code=exception.status_code, content=content, headers=exception.headers
+        status_code=exception.status_code,
+        content=content,
+        headers=exception.headers or {},
     )
 
 
 @v1.exception_handler(StarletteHTTPException)
 async def starlette_http_exception_handler(
     request: Request, exception: StarletteHTTPException
-):
+) -> Response:
     # Catch automatically generated exceptions
     if exception.status_code == HTTP_404_NOT_FOUND:
         content = {

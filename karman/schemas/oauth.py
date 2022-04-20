@@ -9,14 +9,13 @@ __all__ = [
 
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Iterable, Optional, Set
+from typing import Optional
 
 from fastapi import Form, Header, Query
-from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel, Field, HttpUrl
 
 from karman.config import settings
-from karman.oauth import BearerToken, OAuth2AccessToken, Scope, Scopes
+from karman.oauth import BearerToken, OAuth2AccessToken, Scopes
 from karman.util.auth import decode_basic_auth
 
 
@@ -92,7 +91,7 @@ class OAuth2TokenRequest:
             "auth. This takes precedence over parameters specified in the request "
             "body.",
         ),
-        client_id: str = Form(
+        client_id: Optional[str] = Form(
             None,
             description="Unique identifier of the client application.",
         ),
@@ -136,8 +135,6 @@ class OAuth2TokenRequest:
             "token`.",
         ),
     ):
-        scheme, param = get_authorization_scheme_param(authorization)
-
         self.grant_type = grant_type
         self.scope = scope
         self.client_id = client_id

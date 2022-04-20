@@ -1,6 +1,5 @@
 __all__ = ["router"]
 
-from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Response
@@ -36,7 +35,7 @@ class OAuthAPIRoute(ErrorHandlingAPIRoute):
 
 
 @OAuthAPIRoute.exception_handler(HTTPException)
-async def handle_http_exception(request: Request, exception: HTTPException):
+async def handle_http_exception(request: Request, exception: HTTPException) -> Response:
     content = {
         "error": exception.error_code,
         "error_description": exception.message,
@@ -49,13 +48,12 @@ async def handle_http_exception(request: Request, exception: HTTPException):
 @OAuthAPIRoute.exception_handler(RequestValidationError)
 async def handle_request_validation_error(
     request: Request, exception: RequestValidationError
-):
+) -> Response:
     # We just return info about one validation error
     try:
         error = exception.errors()[0]
         field = error["loc"][-1]
         message = error["msg"]
-        error_type = error["type"]
         if field == "scope":
             return JSONResponse(
                 status_code=HTTP_400_BAD_REQUEST,
@@ -139,13 +137,13 @@ async def token(
             client_id = "fake"
             # TODO: Use correct scopes
             scopes = Scopes({Scope.ALL})
-            bearer, claims = create_access_token(user, "fake", scopes)
+            bearer, claims = create_access_token(user, client_id, scopes)
             return OAuth2TokenResponse(
                 access_token=bearer,
                 expires_in=claims.valid_until - claims.issued_at,
                 scope=claims.scope,
             )
-        except NoMatch as e:
+        except NoMatch:
             raise HTTPException(
                 status_code=HTTP_401_UNAUTHORIZED,
                 error_code="invalid_request",

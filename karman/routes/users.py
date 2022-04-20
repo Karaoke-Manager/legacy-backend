@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, Security
+from fastapi import APIRouter, Security
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from karman import schemas
 from karman.models import User
-from karman.oauth import OAuth2AccessToken, Scope, get_access_token, get_user
+from karman.oauth import Scope, get_user
 from karman.schemas.exception import ErrorSchema
 from karman.versioning import version
 
@@ -30,6 +30,6 @@ router = APIRouter(
     response_model=schemas.User,
     response_description="Data about the current user.",
 )
-async def me(user: User = Security(get_user, scopes=[Scope.SONGS])):
+async def me(user: User = Security(get_user, scopes=[Scope.SONGS])) -> schemas.User:
     """Returns information about the user that authenticated the request."""
-    return user
+    return schemas.User.from_orm(user)

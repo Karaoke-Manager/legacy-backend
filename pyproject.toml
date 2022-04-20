@@ -54,9 +54,7 @@ profile = "black"
 
 [tool.mypy]
 files = ["karman", "tests"]
-# TODO: Enable when https://github.com/samuelcolvin/pydantic/pull/3175 is merged
-# plugins = ["pydantic.mypy"]
-plugins = ["sqlmypy"]
+plugins = ["pydantic.mypy", "sqlmypy"]
 # Untyped definitions and calls
 disallow_untyped_defs = true
 # None and Optional handling
@@ -67,6 +65,10 @@ warn_unused_ignores = true
 warn_return_any = true
 # Miscellaneous
 warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "jose.*"
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 warn_untyped_fields = true
@@ -115,6 +117,7 @@ flake8-isort = "^4.1.1"
 mypy = "^0.942"
 sqlalchemy-stubs = "^0.4"
 types-PyYAML = "^6.0.1"
+types-passlib = "^1.7.5"
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]
