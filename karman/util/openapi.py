@@ -1,4 +1,4 @@
-__all__ = ["remove_body_schemas"]
+__all__ = ["remove_body_schemas", "remove_hidden_responses"]
 
 from fastapi import FastAPI
 

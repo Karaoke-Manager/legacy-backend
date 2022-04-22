@@ -14,9 +14,8 @@ from typing import Optional
 from fastapi import Form, Header, Query
 from pydantic import BaseModel, Field, HttpUrl
 
-from karman.config import settings
-from karman.oauth import BearerToken, OAuth2AccessToken, Scopes
-from karman.util.auth import decode_basic_auth
+from ..oauth import BearerToken, OAuth2AccessToken, Scopes
+from ..util.auth import decode_basic_auth
 
 
 class OAuth2ResponseType(str, Enum):
@@ -183,8 +182,6 @@ class OAuth2TokenResponse(BaseModel):
     )
 
     class Config:
-        validate_all = settings.debug
-        validate_assignment = settings.debug
         # Include the custom encoder here until this issue is solved:
         # https://github.com/samuelcolvin/pydantic/issues/951
         json_encoders = {Scopes: str}
@@ -208,7 +205,3 @@ class OAuth2ErrorResponse(BaseModel):
         description="A URI related to the error or a possible solution.",
         example="https://example.com/docs/access_token",
     )
-
-    class Config:
-        validate_all = settings.debug
-        validate_assignment = settings.debug

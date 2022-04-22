@@ -5,7 +5,7 @@ from karman import schemas
 from karman.models import User
 from karman.oauth import Scope, get_user
 from karman.schemas.exception import ErrorSchema
-from karman.versioning import version
+from karman.util.versioning import version
 
 router = APIRouter(
     tags=["Users"],

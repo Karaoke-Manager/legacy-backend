@@ -1,12 +1,16 @@
-import ormar
+__all__ = ["User"]
 
-from .base import BaseMeta
+from sqlalchemy import Column, Text
+
+from .base import BaseModel
 
 
-class User(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "users"
+class User(BaseModel):
+    """
+    This class represents a user in the database.
+    """
 
-    id: int = ormar.Integer(primary_key=True, description="The User ID.")
-    username: str = ormar.Text(unique=True, description="The unique username.")
-    password: str = ormar.Text(description="The hashed password.")
+    __tablename__ = "users"
+
+    username: str = Column(Text, unique=True)
+    password: str = Column(Text)

@@ -1,1 +1,1 @@
-from .openapi import remove_body_schemas
+from .openapi import remove_body_schemas, remove_hidden_responses

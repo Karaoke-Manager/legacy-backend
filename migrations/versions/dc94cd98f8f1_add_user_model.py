@@ -1,15 +1,15 @@
 """Add user model
 
-Revision ID: 4795aa8b5e4c
+Revision ID: dc94cd98f8f1
 Revises: 91df67611d87
-Create Date: 2022-04-19 15:25:26.684863
+Create Date: 2022-04-22 15:17:09.476788
 
 """
 import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "4795aa8b5e4c"
+revision = "dc94cd98f8f1"
 down_revision = "91df67611d87"
 branch_labels = None
 depends_on = None
@@ -20,8 +20,8 @@ def upgrade():
     op.create_table(
         "users",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("username", sa.Text(), nullable=False),
-        sa.Column("password", sa.Text(), nullable=False),
+        sa.Column("username", sa.Text(), nullable=True),
+        sa.Column("password", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("username"),
     )

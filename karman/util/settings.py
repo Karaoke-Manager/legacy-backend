@@ -1,7 +1,7 @@
 __all__ = ["ConfigFileSettingsSource", "SQLiteDsn", "PostgresDsn", "MySQLDsn"]
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, TypeAlias, Union
 
 import yaml
 from pydantic import AnyUrl, BaseSettings
@@ -39,7 +39,7 @@ class ConfigFileSettingsSource:
 # class SQLiteDsn(AnyUrl):
 #     allowed_schemes = {"sqlite"}
 #     host_required = False
-SQLiteDsn = str
+SQLiteDsn: TypeAlias = str
 
 
 class PostgresDsn(AnyUrl):

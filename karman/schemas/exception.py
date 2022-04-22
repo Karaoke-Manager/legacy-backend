@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 from pydantic import Field
 
-from karman.schemas.base import BaseSchema
+from .base import BaseSchema
 
 
 class ErrorSchema(BaseSchema):

@@ -1,11 +1,15 @@
+import asyncio
+
 from alembic import context
-from sqlalchemy import create_engine, pool
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from karman import models
-from karman.config import settings
+from karman.settings import Settings
 
 # Load our MetaData for autogenerate support.
-target_metadata = models.metadata
+target_metadata = models.BaseModel.metadata
+settings = Settings(jwt_secret_key="the key is not being used here")
 
 
 def run_migrations_offline():
@@ -34,27 +38,30 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def run_migrations_online():
+async def run_migrations_online():
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
     """
-    connectable = create_engine(settings.db_url, poolclass=pool.NullPool)
-    with connectable.connect() as connection:
+
+    def run(conn):
         context.configure(
-            connection=connection,
+            connection=conn,
             target_metadata=target_metadata,
             compare_type=True,
             compare_server_default=True,
         )
-
         with context.begin_transaction():
             context.run_migrations()
+
+    connectable = create_async_engine(settings.db_url, poolclass=pool.NullPool)
+    async with connectable.connect() as connection:
+        await connection.run_sync(run)
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run_migrations_online()
+    asyncio.run(run_migrations_online())

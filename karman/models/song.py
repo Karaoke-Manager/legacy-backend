@@ -1,10 +1,11 @@
-import ormar
+__all__ = ["Song"]
 
-from .base import BaseMeta
+from .base import BaseModel
 
 
-class Song(ormar.Model):
-    class Meta(BaseMeta):
-        tablename = "songs"
+class Song(BaseModel):
+    """
+    This class represents a single song in the database.
+    """
 
-    id: int = ormar.Integer(primary_key=True, description="")
+    __tablename__ = "songs"

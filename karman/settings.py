@@ -1,7 +1,8 @@
-__all__ = ["settings"]
+__all__ = ["Settings"]
 
 import os
 from datetime import timedelta
+from functools import lru_cache
 from logging.config import dictConfig
 from pathlib import Path
 from typing import Any, Dict, Tuple, Union
@@ -11,7 +12,12 @@ from jose.constants import Algorithms
 from pydantic import BaseSettings, Extra, Field, FilePath
 from pydantic.env_settings import SettingsSourceCallable
 
-from .helpers import ConfigFileSettingsSource, MySQLDsn, PostgresDsn, SQLiteDsn
+from karman.util.settings import (
+    ConfigFileSettingsSource,
+    MySQLDsn,
+    PostgresDsn,
+    SQLiteDsn,
+)
 
 ENV_PREFIX = os.getenv("KARMAN_ENV_PREFIX", "KARMAN_")
 ENV_FILE_ENCODING = os.getenv(f"{ENV_PREFIX}ENV_ENCODING")
@@ -33,10 +39,7 @@ class Settings(BaseSettings):
     Using the settings
     ==================
     In your code you can use ``karman.config.settings``, an already initialized object
-    containing the actual settings values. Use it like so:
-
-    >>> settings.app_name
-    'Karman API'
+    containing the actual settings values. Use it via ``Settings.instance()``.
 
     Configuration sources
     =====================
@@ -89,7 +92,7 @@ class Settings(BaseSettings):
         description="The name of the application. This value may be visible in the UI.",
     )
     db_url: Union[SQLiteDsn, MySQLDsn, PostgresDsn] = Field(
-        "sqlite:///db.sqlite",
+        "sqlite+aiosqlite:///db.sqlite",
         title="Database connection string",
         description="A SQLAlchemy database connection URL.",
     )
@@ -105,7 +108,7 @@ class Settings(BaseSettings):
         description="Signing algorithm used for OAuth2 access tokens.",
     )
     jwt_secret_key: str = Field(
-        "jdksajdkashfaksfjlahdslkashdklas",
+        ...,
         min_length=20,
         title="JWT Secret Key",
         description="A secret value used to encode and decode access tokens.",
@@ -145,8 +148,8 @@ class Settings(BaseSettings):
                 env_settings,
             )
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
         # Load Default Logging Config
         with open("logging.yml", "r") as file:
             dictConfig(yaml.safe_load(file))
@@ -161,5 +164,7 @@ class Settings(BaseSettings):
         if logging_config:
             dictConfig(logging_config)
 
-
-settings = Settings()
+    @staticmethod
+    @lru_cache
+    def instance() -> "Settings":
+        return Settings()

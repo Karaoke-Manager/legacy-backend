@@ -25,14 +25,15 @@ from fastapi.openapi.models import (
 from fastapi.security import OAuth2, SecurityScopes
 from fastapi.security.utils import get_authorization_scheme_param
 from jose import ExpiredSignatureError, JWTError, jwt
-from ormar import NoMatch
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field, ValidationError, validator
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
-from karman.config import settings
+from karman import db
 from karman.exceptions import HTTPException
 from karman.models import User
+from karman.settings import Settings
 
 if TYPE_CHECKING:
     from pydantic.typing import AbstractSetIntStr, DictStrAny, MappingIntStrAny
@@ -88,9 +89,6 @@ class Scopes(Set[Scope]):
             return cls(Scope(v) for s in value for v in s.split(" "))
         raise TypeError("string required")
 
-    def __repr__(self) -> str:
-        return "{" + ", ".join(self) + "}"
-
     def __str__(self) -> str:
         return self.serialize()
 
@@ -101,7 +99,7 @@ class Scopes(Set[Scope]):
 class OAuth2AccessToken(BaseModel):
     id: uuid.UUID = Field(..., alias="jti", description="A unique ID for this token.")
     issuer: str = Field(
-        settings.jwt_issuer,
+        default_factory=lambda: Settings.instance().jwt_issuer,
         alias="iss",
         description="An identification of who issued the token.",
     )
@@ -134,7 +132,7 @@ class OAuth2AccessToken(BaseModel):
             return v
         if "issued_at" in values:
             issued_at = values["issued_at"]
-            return issued_at + settings.jwt_validity_period
+            return issued_at + Settings.instance().jwt_validity_period
         raise ValueError("issued_at or valid_until must be specified.")
 
     def dict(
@@ -164,8 +162,8 @@ class OAuth2AccessToken(BaseModel):
         return data
 
     class Config:
-        validate_all = settings.debug
-        validate_assignment = settings.debug
+        # Validate field defaults to set the expiration date
+        validate_all = True
         allow_population_by_field_name = True
         # Include the custom encoder here until this issue is solved:
         # https://github.com/samuelcolvin/pydantic/issues/951
@@ -219,14 +217,15 @@ def hash_password(password: str) -> str:
     return str(context.hash(password))
 
 
-def verify_password(password: str, pw_hash: str) -> str:
+def verify_password(password: str, pw_hash: str) -> bool:
     context = get_crypt_context()
-    return str(context.verify(password, pw_hash))
+    return bool(context.verify(password, pw_hash))
 
 
 def create_access_token(
     user: User, client_id: OAuth2ClientID, scope: Scopes
 ) -> Tuple[BearerToken, OAuth2AccessToken]:
+    settings = Settings.instance()
     token = OAuth2AccessToken(
         id=uuid.uuid4(),
         subject=f"user:{user.id}",
@@ -261,6 +260,7 @@ async def get_access_token(
     # use an undefined scope.
     required_scopes = Scopes.validate(scopes.scopes)
     try:
+        settings = Settings.instance()
         claims = jwt.decode(
             token,
             settings.jwt_secret_key,
@@ -318,6 +318,7 @@ async def get_access_token(
 async def get_user(
     scopes: SecurityScopes,
     token: OAuth2AccessToken = Depends(get_access_token),
+    session: AsyncSession = Depends(db.session),
 ) -> Optional[User]:
     domain, separator, user_id = token.subject.partition(":")
     if separator != ":" or domain != "user":
@@ -330,9 +331,8 @@ async def get_user(
                 f'scope="{scopes.scope_str}"'
             },
         )
-    try:
-        return await User.objects.get(id=user_id)
-    except NoMatch:
+    user = await session.get(User, user_id)
+    if user is None:
         raise HTTPException(
             status_code=HTTP_401_UNAUTHORIZED,
             error_code="invalidUser",
@@ -342,3 +342,4 @@ async def get_user(
                 f'scope="{scopes.scope_str}"'
             },
         )
+    return user

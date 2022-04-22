@@ -5,8 +5,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute, Request
-from ormar import NoMatch
 from pydantic import HttpUrl
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from starlette.responses import JSONResponse, RedirectResponse
 from starlette.status import (
     HTTP_400_BAD_REQUEST,
@@ -16,7 +17,7 @@ from starlette.status import (
     HTTP_503_SERVICE_UNAVAILABLE,
 )
 
-from karman import oauth
+from karman import db, oauth
 from karman.exceptions import HTTPException
 from karman.models import User
 from karman.oauth import Scope, Scopes, create_access_token, verify_password
@@ -27,15 +28,26 @@ from karman.schemas.oauth import (
     OAuth2TokenResponse,
 )
 from karman.util.exception import ErrorHandlingAPIRoute
-from karman.versioning import version
+from karman.util.versioning import version
 
 
 class OAuthAPIRoute(ErrorHandlingAPIRoute):
-    pass
+    """
+    This custom APIRoute subclass handles errors in the OAuth endpoints. It mainly
+    formats the error responses according to the OAuth spec.
+    """
 
 
 @OAuthAPIRoute.exception_handler(HTTPException)
 async def handle_http_exception(request: Request, exception: HTTPException) -> Response:
+    """
+    Formats a ``HTTPException`` according to the OAuth spec and returns an appropriate
+    ``Response`` in JSON format.
+
+    :param request: The current request.
+    :param exception: The exception that needs to be handled.
+    :return: A response to be returned to the user.
+    """
     content = {
         "error": exception.error_code,
         "error_description": exception.message,
@@ -49,6 +61,13 @@ async def handle_http_exception(request: Request, exception: HTTPException) -> R
 async def handle_request_validation_error(
     request: Request, exception: RequestValidationError
 ) -> Response:
+    """
+    Handles input validation errors for OAuth endpoints. This function formats the error
+    response according to the OAuth specification.
+    :param request: The current request.
+    :param exception: The exception that needs to be handled.
+    :return: A response to be returned to the user.
+    """
     # We just return info about one validation error
     try:
         error = exception.errors()[0]
@@ -114,6 +133,7 @@ An incorrectly formatted request will result in an error. Possible error codes a
 async def token(
     response: Response,
     data: OAuth2TokenRequest = Depends(),
+    session: AsyncSession = Depends(db.session),
 ) -> OAuth2TokenResponse:
     """
     This endpoint implements the [OAuth 2.0 Token Endpoint](
@@ -128,27 +148,29 @@ async def token(
                 error_code="invalid_request",
                 message="username and password required.",
             )
-        try:
-            user = await User.objects.get(username=data.username)
-            if not verify_password(data.password, user.password):
-                # technically not the correct exception but works well here
-                raise NoMatch
-            # TODO: Use and validate client_id
-            client_id = "fake"
-            # TODO: Use correct scopes
-            scopes = Scopes({Scope.ALL})
-            bearer, claims = create_access_token(user, client_id, scopes)
-            return OAuth2TokenResponse(
-                access_token=bearer,
-                expires_in=claims.valid_until - claims.issued_at,
-                scope=claims.scope,
-            )
-        except NoMatch:
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED,
-                error_code="invalid_request",
-                message="username and password do not match.",
-            )
+        login_failed_exception = HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED,
+            error_code="invalid_request",
+            message="username and password do not match.",
+        )
+        result = await session.execute(
+            select(User).where(User.username == data.username)
+        )
+        user = result.scalars().first()
+        if user is None:
+            raise login_failed_exception
+        if not verify_password(data.password, user.password):
+            raise login_failed_exception
+        # TODO: Use and validate client_id
+        client_id = "fake"
+        # TODO: Use correct scopes
+        scopes = Scopes({Scope.ALL})
+        bearer, claims = create_access_token(user, client_id, scopes)
+        return OAuth2TokenResponse(
+            access_token=bearer,
+            expires_in=claims.valid_until - claims.issued_at,
+            scope=claims.scope,
+        )
     else:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
