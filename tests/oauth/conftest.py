@@ -17,6 +17,7 @@ def jwt_secret_key() -> str:
     return "jpRBfXaKi1Rj0CTunObUPym4COeTHQeVt/9bppSQBR0wsk4HLzkvHf8BkoB1OY"
 
 
+@pytest.fixture
 def client_id(request: FixtureRequest) -> str:
     """Returns the client ID."""
     return "test client"
@@ -102,13 +103,13 @@ def jwt_token_claims(
     """
     token_id = str(uuid.uuid4())
     return {
+        "iss": settings.jwt_issuer,
         "jti": token_id,
         "sub": f"user:{user.id}",
         "iat": jwt_token_issue_date,
         "exp": jwt_token_expiry_date,
-        "iss": settings.jwt_issuer,
         "username": user.username,
-        "extra": "data",
         "client_id": client_id,
         "scope": str(scope),
+        "extra": "data",
     }

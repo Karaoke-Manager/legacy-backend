@@ -67,7 +67,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = "jose.*"
+module = ["jose.*", "pytest", "_pytest", "_pytest.fixtures", "_pytest.monkeypatch"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]

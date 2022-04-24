@@ -26,7 +26,7 @@ from fastapi.security import OAuth2, SecurityScopes
 from fastapi.security.utils import get_authorization_scheme_param
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Extra, Field, ValidationError, validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
@@ -109,7 +109,9 @@ class Scopes(Set[Scope]):
         :return: A ``Scopes`` instance.
         :raises ValueError: If the input does not encode a valid ``Scopes`` instance.
         """
-        if isinstance(value, str):
+        if value == "":
+            return cls()
+        elif isinstance(value, str):
             return cls(Scope(v) for v in value.split(" "))
         elif isinstance(value, Iterable):
             return cls(Scope(v) for s in value for v in s.split(" "))
@@ -203,6 +205,7 @@ class OAuth2AccessToken(BaseModel):
         return data
 
     class Config:
+        extra = Extra.ignore
         # Validate field defaults to set the expiration date
         validate_all = True
         allow_population_by_field_name = True
