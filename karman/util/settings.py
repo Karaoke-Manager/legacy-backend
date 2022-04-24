@@ -1,7 +1,7 @@
 __all__ = ["ConfigFileSettingsSource", "SQLiteDsn", "PostgresDsn", "MySQLDsn"]
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, TypeAlias, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
 import yaml
 from pydantic import AnyUrl, BaseSettings
@@ -10,6 +10,8 @@ from pydantic import AnyUrl, BaseSettings
 class ConfigFileSettingsSource:
     """
     A simple configuration source reading from a JSON file.
+
+    See https://pydantic-docs.helpmanual.io/usage/settings/#customise-settings-sources.
     """
 
     __slots__ = ("file", "encoding")
@@ -35,20 +37,28 @@ class ConfigFileSettingsSource:
         return {}
 
 
-# FIXME: This requires Pydantic 1.9. The one below is a temporary fix.
-# class SQLiteDsn(AnyUrl):
-#     allowed_schemes = {"sqlite"}
-#     host_required = False
-SQLiteDsn: TypeAlias = str
+class SQLiteDsn(AnyUrl):
+    """
+    A SQLite connection string.
+    """
+
+    allowed_schemes = {"sqlite+aiosqlite"}
+    host_required = False  # file URLs do not have a host component
 
 
 class PostgresDsn(AnyUrl):
-    # TODO: Add allowed drivers here
-    allowed_schemes = {"postgres", "postgresql"}
+    """
+    A PostgreSQL connection string.
+    """
+
+    allowed_schemes = {"postgres+asyncpg", "postgresql+asyncpg"}
     user_required = True
 
 
 class MySQLDsn(AnyUrl):
-    # TODO: Add allowed drivers here
-    allowed_schemes = {"mysql", "mariadb"}
+    """
+    A MySQL/MariaDB connection string.
+    """
+
+    allowed_schemes = {"mysql+aiomysql", "mariadb+aiomysql"}
     user_required = True

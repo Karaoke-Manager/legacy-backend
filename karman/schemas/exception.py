@@ -1,3 +1,5 @@
+__all__ = ["ErrorSchema"]
+
 from typing import Any, Optional
 
 from pydantic import Field

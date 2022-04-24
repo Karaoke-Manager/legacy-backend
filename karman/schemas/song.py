@@ -10,15 +10,21 @@ from .base import BaseSchema
 
 
 class DurationType(ConstrainedDecimal):
+    """This type is used by Pydantic to format a song's duration."""
+
     gt = 0
     decimal_places = 3
 
 
 class NonZeroInt(ConstrainedInt):
+    """This type is used by Pydantic."""
+
     gt = 0
 
 
 class RatingType(ConstrainedDecimal):
+    """This datatype identifies the rating value of a song."""
+
     ge = 0
     le = 10
     decimal_places = 1
@@ -27,6 +33,8 @@ class RatingType(ConstrainedDecimal):
 class SongKind(str, Enum):
     """Identifies a type of song."""
 
+    # Currently, only UltraStar songs are supported. The purpose of this data type is to
+    # make it easy to support more kinds of songs in the future.
     ultrastar = "ultrastar"
     """UltraStar compatible songs."""
 

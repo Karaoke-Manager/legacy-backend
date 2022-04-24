@@ -4,18 +4,17 @@ from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 from karman import schemas
 from karman.models import User
 from karman.oauth import Scope, get_user
-from karman.schemas.exception import ErrorSchema
 from karman.util.versioning import version
 
 router = APIRouter(
     tags=["Users"],
     responses={
         HTTP_401_UNAUTHORIZED: {
-            "model": ErrorSchema,
+            "model": schemas.ErrorSchema,
             "description": "The request is not authenticated.",
         },
         HTTP_403_FORBIDDEN: {
-            "model": ErrorSchema,
+            "model": schemas.ErrorSchema,
             "description": "The request does not have sufficient privileges to "
             "be executed.",
         },

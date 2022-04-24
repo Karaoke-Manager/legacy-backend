@@ -6,6 +6,14 @@ from fastapi.security.utils import get_authorization_scheme_param
 
 
 def decode_basic_auth(header: str) -> Tuple[str, str]:
+    """
+    Decodes the value of an ``Authorization`` header expecting HTTP Basic Auth
+    credentials.
+    :param header: The header value (including the leading 'Basic' prefix.
+    :return: A tuple of username and password encoded in the header.
+    :raises ValueError: If the provided value cannot successfully be decoded as HTTP
+                        Basic Auth header value.
+    """
     scheme, param = get_authorization_scheme_param(header)
     if scheme.lower() != "basic":
         raise ValueError("authorization scheme mismatch")

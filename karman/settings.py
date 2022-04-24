@@ -164,7 +164,11 @@ class Settings(BaseSettings):
         if logging_config:
             dictConfig(logging_config)
 
-    @staticmethod
+    @classmethod
     @lru_cache
-    def instance() -> "Settings":
-        return Settings()
+    # TODO: Return 'Self' in Python 3.11
+    def instance(cls) -> "Settings":
+        """
+        Returns the global ``Settings`´ instance.
+        """
+        return cls()

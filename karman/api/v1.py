@@ -13,7 +13,7 @@ from karman.util.versioning import select_routes, strict_version_selector
 
 from ..exceptions import HTTPException
 from ..routes import oauth, songs, users
-from ..util import remove_body_schemas, remove_hidden_responses
+from ..util import openapi
 
 
 def get_app(
@@ -45,8 +45,8 @@ def get_app(
         servers=servers,
     )
     select_routes(api, v1, strict_version_selector(1))
-    remove_body_schemas(v1)
-    remove_hidden_responses(v1)
+    openapi.remove_body_schemas(v1)
+    openapi.remove_hidden_responses(v1)
 
     @v1.exception_handler(HTTPException)
     async def http_exception_handler(

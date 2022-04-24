@@ -26,8 +26,19 @@ class OAuth2ResponseType(str, Enum):
 
 
 # Note: This schema is compliant with the OAuth 2 authorize endpoint schema. We
-# currently do not implement the OAuth spec completely but may do so in the future.
+# currently do not implement the full OAuth spec completely but may do so in the future.
 class OAuth2AuthorizationRequest:
+    """
+    Request schema for the [OAuth 2.0 /authorize endpoint](
+    https://www.oauth.com/oauth2-servers/authorization/the-authorization-request/). This
+    class is intended to be used as a FastAPI dependency.
+
+    The request object can be used for all flows that use the /authorize endpoint. Note
+    however that this class does not perform any semantic validation on the provided
+    parameters. Depending on the provided ``response_type`` you might want to ensure
+    that certain parameters are set.
+    """
+
     def __init__(
         self,
         connection: str = Query(
@@ -63,6 +74,11 @@ class OAuth2AuthorizationRequest:
             "login request with the response.",
         ),
     ):
+        """
+        Initializes the request object with the values provided by the request. Usually
+        you do not need to call this method yourself but let FastAPI handle this via its
+        dependency mechanism.
+        """
         self.connection = connection
         self.client_id = client_id
         self.response_type = response_type
@@ -74,6 +90,27 @@ class OAuth2AuthorizationRequest:
 # Note: This schema is compliant with the OAuth 2 token endpoint schema. We currently do
 # not implement the OAuth spec completely but may do so in the future.
 class OAuth2TokenRequest:
+    """
+    Request schema for the [OAuth 2.0 /token endpoint(
+    https://www.oauth.com/oauth2-servers/device-flow/token-request/). This class is
+    intended to be used as a FastAPI dependency.
+
+    The request object can be used for all flows that use the /token endpoint. Note
+    however that this class does not perform any semantic validation on the provided
+    parameters. Depending on the provided ``grant_type`` you might want to ensure
+    that certain parameters are set.
+
+    The request schema does understand two kinds of client authentication:
+    - You can provide a ``client_id`` and ``client_secret`` in the request body along
+      with all the other parameters.
+    - You can provide the ``client_id`` and ``client_secret`` via HTTP Basic Auth. If
+      any ``Authorization`` header is present it takes precedence over the values in the
+      request body, even if it is not a valid Basic Auth header. If the
+      ``Authorization`` header is not a valid HTTP Basic Auth header, the request is
+      assumed to be unauthenticated (``client_id`` and ``client_secret`` are set to
+      ``None``). No exception is raised in this case.
+    """
+
     def __init__(
         self,
         grant_type: str = Form(
@@ -134,6 +171,11 @@ class OAuth2TokenRequest:
             "token`.",
         ),
     ):
+        """
+        Initializes the request object with the values provided by the request. Usually
+        you do not need to call this method yourself but let FastAPI handle this via its
+        dependency mechanism.
+        """
         self.grant_type = grant_type
         self.scope = scope
         self.client_id = client_id
@@ -153,7 +195,10 @@ class OAuth2TokenRequest:
 
 
 class OAuth2TokenResponse(BaseModel):
-    """A response from the OAuth 2.0 Token endpoint returning a token."""
+    """
+    A response from the OAuth 2.0 Token endpoint returning a token. In case of an error
+    this schema does not apply.
+    """
 
     access_token: BearerToken = Field(
         ...,
@@ -188,7 +233,10 @@ class OAuth2TokenResponse(BaseModel):
 
 
 class OAuth2ErrorResponse(BaseModel):
-    """A response from the OAuth 2.0 token endpoint returning an error."""
+    """
+    A response from the OAuth 2.0 token endpoint returning an error. In case of an error
+    this schema does not apply.
+    """
 
     error: str = Field(
         ...,

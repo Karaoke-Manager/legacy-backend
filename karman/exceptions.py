@@ -1,9 +1,18 @@
+__all__ = ["HTTPException"]
+
 from typing import Any, Dict, Optional
 
 from fastapi import HTTPException as FastAPIHTTPException
 
 
 class HTTPException(FastAPIHTTPException):
+    """
+    A custom subclass of FastAPI's ``HTTPException``.
+
+    This class adds a field ``error_code`` making it possible to provide a
+    machine-readable error detail in error responses.
+    """
+
     def __init__(
         self,
         status_code: int,

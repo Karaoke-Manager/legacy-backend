@@ -39,7 +39,8 @@ def remove_body_schemas(app: FastAPI) -> None:
 def remove_hidden_responses(app: FastAPI) -> None:
     """
     Modifies the OpenAPI schema of `app` by removing responses that have
-    `include_in_schema´ set to `False`.
+    `include_in_schema´ set to `False`. This provides a way to hide the default 422
+    responses in the API docs.
     """
     openapi_schema = app.openapi()
     for path in openapi_schema["paths"].values():
@@ -48,6 +49,7 @@ def remove_hidden_responses(app: FastAPI) -> None:
                 response = method_data["responses"][code]
                 if response.get("include_in_schema") is False:
                     del method_data["responses"][code]
+            # Also hide responses in callback routes
             for callback in method_data.get("callbacks", {}).values():
                 for callback_path in callback.values():
                     for callback_method_data in callback_path.values():

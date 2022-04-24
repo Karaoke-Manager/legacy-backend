@@ -1,3 +1,4 @@
+from .exception import ErrorSchema
 from .oauth import (
     OAuth2AccessToken,
     OAuth2AuthorizationRequest,

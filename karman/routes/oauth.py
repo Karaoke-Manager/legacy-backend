@@ -17,17 +17,11 @@ from starlette.status import (
     HTTP_503_SERVICE_UNAVAILABLE,
 )
 
-from karman import db, oauth
+from karman import db, oauth, schemas
 from karman.exceptions import HTTPException
 from karman.models import User
 from karman.oauth import Scope, Scopes, create_access_token, verify_password
-from karman.schemas.oauth import (
-    OAuth2AuthorizationRequest,
-    OAuth2ErrorResponse,
-    OAuth2TokenRequest,
-    OAuth2TokenResponse,
-)
-from karman.util.exception import ErrorHandlingAPIRoute
+from karman.util.exception import ErrorHandlingAPIRoute, exception_handler
 from karman.util.versioning import version
 
 
@@ -37,62 +31,64 @@ class OAuthAPIRoute(ErrorHandlingAPIRoute):
     formats the error responses according to the OAuth spec.
     """
 
+    @staticmethod
+    @exception_handler(HTTPException)
+    async def handle_http_exception(
+        request: Request, exception: HTTPException
+    ) -> Response:
+        """
+        Formats a ``HTTPException`` according to the OAuth spec and returns an appropriate
+        ``Response`` in JSON format.
 
-@OAuthAPIRoute.exception_handler(HTTPException)
-async def handle_http_exception(request: Request, exception: HTTPException) -> Response:
-    """
-    Formats a ``HTTPException`` according to the OAuth spec and returns an appropriate
-    ``Response`` in JSON format.
+        :param request: The current request.
+        :param exception: The exception that needs to be handled.
+        :return: A response to be returned to the user.
+        """
+        content = {
+            "error": exception.error_code,
+            "error_description": exception.message,
+        }
+        if exception.detail:
+            content["error_uri"] = exception.detail
+        return JSONResponse(status_code=exception.status_code, content=content)
 
-    :param request: The current request.
-    :param exception: The exception that needs to be handled.
-    :return: A response to be returned to the user.
-    """
-    content = {
-        "error": exception.error_code,
-        "error_description": exception.message,
-    }
-    if exception.detail:
-        content["error_uri"] = exception.detail
-    return JSONResponse(status_code=exception.status_code, content=content)
-
-
-@OAuthAPIRoute.exception_handler(RequestValidationError)
-async def handle_request_validation_error(
-    request: Request, exception: RequestValidationError
-) -> Response:
-    """
-    Handles input validation errors for OAuth endpoints. This function formats the error
-    response according to the OAuth specification.
-    :param request: The current request.
-    :param exception: The exception that needs to be handled.
-    :return: A response to be returned to the user.
-    """
-    # We just return info about one validation error
-    try:
-        error = exception.errors()[0]
-        field = error["loc"][-1]
-        message = error["msg"]
-        if field == "scope":
+    @staticmethod
+    @exception_handler(RequestValidationError)
+    async def handle_request_validation_error(
+        request: Request, exception: RequestValidationError
+    ) -> Response:
+        """
+        Handles input validation errors for OAuth endpoints. This function formats the error
+        response according to the OAuth specification.
+        :param request: The current request.
+        :param exception: The exception that needs to be handled.
+        :return: A response to be returned to the user.
+        """
+        # We just return info about one validation error
+        try:
+            error = exception.errors()[0]
+            field = error["loc"][-1]
+            message = error["msg"]
+            if field == "scope":
+                return JSONResponse(
+                    status_code=HTTP_400_BAD_REQUEST,
+                    content={"error": "invalid_scope", "error_description": message},
+                )
             return JSONResponse(
                 status_code=HTTP_400_BAD_REQUEST,
-                content={"error": "invalid_scope", "error_description": message},
+                content={
+                    "error": "invalid_request",
+                    "error_description": f"Error for parameter '{field}': {message}",
+                },
             )
-        return JSONResponse(
-            status_code=HTTP_400_BAD_REQUEST,
-            content={
-                "error": "invalid_request",
-                "error_description": f"Error for parameter '{field}': {message}",
-            },
-        )
-    except IndexError:
-        return JSONResponse(
-            status_code=HTTP_400_BAD_REQUEST,
-            content={
-                "error": "invalid_request",
-                "error_description": "The request was formatted incorrectly.",
-            },
-        )
+        except IndexError:
+            return JSONResponse(
+                status_code=HTTP_400_BAD_REQUEST,
+                content={
+                    "error": "invalid_request",
+                    "error_description": "The request was formatted incorrectly.",
+                },
+            )
 
 
 router = APIRouter(
@@ -106,13 +102,13 @@ router = APIRouter(
 @router.post(
     f"/{oauth.token_url}",
     summary="Get an access token",
-    response_model=OAuth2TokenResponse,
+    response_model=schemas.OAuth2TokenResponse,
     response_model_exclude_none=True,
     response_description="The response to a successful request contains an "
     "`access_token` and optionally a `refresh_token`.",
     responses={
         HTTP_400_BAD_REQUEST: {
-            "model": OAuth2ErrorResponse,
+            "model": schemas.OAuth2ErrorResponse,
             "description": """
 An incorrectly formatted request will result in an error. Possible error codes are:
 
@@ -124,7 +120,7 @@ An incorrectly formatted request will result in an error. Possible error codes a
 """,
         },
         HTTP_401_UNAUTHORIZED: {
-            "model": OAuth2ErrorResponse,
+            "model": schemas.OAuth2ErrorResponse,
             "description": "If the specified `client_id` or `client_secret` are "
             "invalid. The returned error code will be `invalid_client` in this case.",
         },
@@ -132,9 +128,9 @@ An incorrectly formatted request will result in an error. Possible error codes a
 )
 async def token(
     response: Response,
-    data: OAuth2TokenRequest = Depends(),
+    data: schemas.OAuth2TokenRequest = Depends(),
     session: AsyncSession = Depends(db.session),
-) -> OAuth2TokenResponse:
+) -> schemas.OAuth2TokenResponse:
     """
     This endpoint implements the [OAuth 2.0 Token Endpoint](
     https://www.oauth.com/oauth2-servers/access-tokens/access-token-response/). If
@@ -147,26 +143,25 @@ async def token(
                 status_code=HTTP_400_BAD_REQUEST,
                 error_code="invalid_request",
                 message="username and password required.",
+                detail="",
             )
-        login_failed_exception = HTTPException(
-            status_code=HTTP_401_UNAUTHORIZED,
-            error_code="invalid_request",
-            message="username and password do not match.",
-        )
         result = await session.execute(
             select(User).where(User.username == data.username)
         )
         user = result.scalars().first()
-        if user is None:
-            raise login_failed_exception
-        if not verify_password(data.password, user.password):
-            raise login_failed_exception
+        if user is None or not verify_password(data.password, user.password):
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED,
+                error_code="invalid_request",
+                message="username and password do not match.",
+                detail="",
+            )
         # TODO: Use and validate client_id
         client_id = "fake"
         # TODO: Use correct scopes
         scopes = Scopes({Scope.ALL})
         bearer, claims = create_access_token(user, client_id, scopes)
-        return OAuth2TokenResponse(
+        return schemas.OAuth2TokenResponse(
             access_token=bearer,
             expires_in=claims.valid_until - claims.issued_at,
             scope=claims.scope,
@@ -176,6 +171,7 @@ async def token(
             status_code=HTTP_400_BAD_REQUEST,
             error_code="unsupported_grant_type",
             message="This grant type is currently not supported.",
+            detail="",
         )
 
 
@@ -237,7 +233,7 @@ An error code identifying what kind of error occurred. Possible values are:
     ],
     responses={
         HTTP_400_BAD_REQUEST: {
-            "model": OAuth2ErrorResponse,
+            "model": schemas.OAuth2ErrorResponse,
             "description": """
 An incorrectly formatted request will result in an error. Possible error codes are:
 
@@ -250,24 +246,23 @@ An incorrectly formatted request will result in an error. Possible error codes a
 """,
         },
         HTTP_500_INTERNAL_SERVER_ERROR: {
-            "model": OAuth2ErrorResponse,
+            "model": schemas.OAuth2ErrorResponse,
             "description": "An internal server error occurred. The error code is "
             "`server_error`.",
         },
         HTTP_503_SERVICE_UNAVAILABLE: {
-            "model": OAuth2ErrorResponse,
+            "model": schemas.OAuth2ErrorResponse,
             "description": "The server is undergoing maintenance. The error code is "
             "`temporarily_unavailable`.",
         },
     },
 )
 async def authorize(
-    request: OAuth2AuthorizationRequest = Depends(),
+    request: schemas.OAuth2AuthorizationRequest = Depends(),
 ) -> RedirectResponse:
     """
-    Redirects to an authentication provider as specified by `connection`. The provider
-    then performs authentication and redirects back to the specified `redirect_uri` with
-    a `code` in the request. The `code` can then be exchanged with an access token.
+    Initiates the OAuth 2.0 authorization code flow. This endpoint can be used for first
+    and third party identity providers using the ``connection`` parameter.
     """
     # TODO: Maybe pass additional parameters to the Auth backend?
     raise NotImplementedError
