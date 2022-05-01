@@ -61,7 +61,7 @@ jobs:
           poetry config virtualenvs.create false
       - name: Install Dependencies
         run: |
-          poetry install --no-interaction --no-root --extras tests
+          poetry install --no-interaction --no-root --extras tests --extras sqlite
           pip install pytest-github-actions-annotate-failures
       - name: Run Pytest
         run: poe test --cov --cov-report=xml
