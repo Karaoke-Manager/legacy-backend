@@ -1,20 +1,16 @@
 import uuid
 from datetime import datetime, timedelta
-from typing import Generator
 
 import pytest
 from _pytest.fixtures import FixtureRequest
-from _pytest.monkeypatch import MonkeyPatch
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from karman import get_app
 from karman.models import User
-from karman.oauth import Scope, Scopes
+from karman.oauth import Scope, Scopes, hash_password
 from karman.settings import Settings
-
-
-@pytest.fixture
-def jwt_secret_key() -> str:
-    """Returns the secret Key used for signing JWTs."""
-    return "jpRBfXaKi1Rj0CTunObUPym4COeTHQeVt/9bppSQBR0wsk4HLzkvHf8BkoB1OY"
 
 
 @pytest.fixture
@@ -24,22 +20,18 @@ def client_id(request: FixtureRequest) -> str:
 
 
 @pytest.fixture
-def settings(
-    monkeypatch: MonkeyPatch, jwt_secret_key: str
-) -> Generator[Settings, None, None]:
-    """
-    Sets up and returns the ``Settings`` instance.
-
-    This fixture makes sure that the settings are setup according to the current test
-    environment.
-    """
-    instance = Settings(jwt_secret_key=jwt_secret_key)
-    monkeypatch.setattr(Settings, "instance", lambda: instance)
-    yield instance
-    monkeypatch.undo()
+def app(settings: Settings) -> FastAPI:
+    """Returns a fully configured instance of the app to be tested."""
+    return get_app()
 
 
-@pytest.fixture(params=[(42, "somebody"), (1, "test")])
+@pytest.fixture
+def client(app: FastAPI) -> TestClient:
+    """Returns a test client that can be used to issue requests to the app."""
+    return TestClient(app)
+
+
+@pytest.fixture(params=[(42, "somebody", "my password"), (1, "test", "pass12§421")])
 def user(request: FixtureRequest) -> User:
     """
     Returns a ``User`` instance.
@@ -47,7 +39,17 @@ def user(request: FixtureRequest) -> User:
     The user is not necessarily present in the database.
     """
     user = User()
-    user.id, user.username = getattr(request, "param")
+    uid, username, password = getattr(request, "param")
+    user.id, user.username = uid, username
+    setattr(user, "cleartext_password", password)
+    user.password = hash_password(password)
+    return user
+
+
+@pytest.fixture
+async def user_in_db(user: User, session: AsyncSession) -> User:
+    session.add(user)
+    await session.flush()
     return user
 
 

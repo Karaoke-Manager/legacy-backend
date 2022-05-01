@@ -89,7 +89,7 @@ python-jose = { version = "^3.3.0", extras = ["cryptography"] }
 passlib = { version = "^1.7.4", extras = ["bcrypt"] }
 
 # ORM and Database Drivers
-sqlalchemy = { version = "^1.4.35", extras = ["asyncio", "mypy"] }
+sqlalchemy = { version = "^1.4.36", extras = ["asyncio", "mypy"] }
 alembic = "^1.7.7"
 asyncpg = { version = "^0.25.0", optional = true }
 aiomysql = { version = "^0.1.0", optional = true }
@@ -103,7 +103,7 @@ pytest = { version = "^7.1.1", optional = true }
 pytest-asyncio = { version = "^0.18.3", optional = true }
 pytest-cov = { version = "^3.0.0", optional = true }
 pytest-xdist = { version = "^2.5.0", optional = true }
-
+requests = { version = "^2.27.1", optional = true }
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.13.1"
@@ -114,7 +114,7 @@ flake8 = "^4.0.1"
 flake8-black = "^0.3.2"
 flake8-isort = "^4.1.1"
 
-mypy = "^0.942"
+mypy = "^0.950"
 types-PyYAML = "^6.0.1"
 types-passlib = "^1.7.5"
 
@@ -124,7 +124,7 @@ postgresql = ["asyncpg"]
 postgres = ["asyncpg"]
 mysql = ["aiomysql"]
 sqlite = ["aiosqlite"]
-tests = ["pytest", "pytest-asyncio", "pytest-cov", "pytest-xdist"]
+tests = ["pytest", "pytest-asyncio", "pytest-cov", "pytest-xdist", "requests"]
 
 [tool.poetry.build]
 generate-setup-file = false

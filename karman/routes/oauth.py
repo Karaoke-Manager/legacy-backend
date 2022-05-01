@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute, Request
+from passlib.exc import UnknownHashError
 from pydantic import HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -149,7 +150,12 @@ async def token(
             select(User).where(User.username == data.username)
         )
         user = result.scalars().first()
-        if user is None or not verify_password(data.password, user.password):
+        try:
+            if user is None or not verify_password(data.password, user.password):
+                # This is technically not the correct exception but we catch it
+                # immediately below.
+                raise UnknownHashError
+        except UnknownHashError:
             raise HTTPException(
                 status_code=HTTP_401_UNAUTHORIZED,
                 error_code="invalid_request",
