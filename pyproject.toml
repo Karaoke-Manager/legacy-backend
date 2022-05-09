@@ -5,12 +5,17 @@ description = "A management software for UltraStar karaoke files."
 authors = ["Kim Wittenburg <codello@wittenburg.kim>"]
 license = "MIT"
 
+packages = [
+    { include = "karman" },
+    { include = "fastapi_tus", from = "packages" }
+]
+
 readme = "README.md"
 repository = "https://github.com/Karaoke-Manager/backend"
 # homepage = "..."
-# documentation = "..."
+documentation = "https://karman.readthedocs.io"
 
-keywords = ["fastapi", "asyncio", "ultrastar", "karaoke"]
+keywords = ["ultrastar", "karaoke", "fastapi", "asyncio"]
 classifiers = [
     "Development Status :: 1 - Planning",
     "Environment :: Web Environment",

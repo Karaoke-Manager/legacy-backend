@@ -90,13 +90,18 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
+<<<<<<< HEAD
 version = "21.4.0"
+=======
+version = "21.3.0"
+>>>>>>> 40bfdb9 (Current State)
 description = "Classes Without Boilerplate"
 category = "main"
 optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.extras]
+<<<<<<< HEAD
 dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit", "cloudpickle"]
 docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
 tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "cloudpickle"]
@@ -117,6 +122,12 @@ six = ">=1.4.1"
 [package.extras]
 tests = ["pytest (>=3.2.1,!=3.3.0)"]
 typecheck = ["mypy"]
+=======
+dev = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
+docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
+tests = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface"]
+tests_no_zope = ["cloudpickle", "coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
+>>>>>>> 40bfdb9 (Current State)
 
 [[package]]
 name = "black"
@@ -279,6 +290,7 @@ pydantic = ">=1.7.2"
 
 [package.extras]
 gino = ["gino[starlette] (>=1.0.1)", "SQLAlchemy (>=1.3.20)"]
+<<<<<<< HEAD
 all = ["gino[starlette] (>=1.0.1)", "SQLAlchemy (>=1.3.20)", "databases[postgresql,mysql,sqlite] (>=0.4.0)", "orm (>=0.1.5)", "tortoise-orm[asyncpg,aiomysql,aiosqlite] (>=0.16.18,<0.20.0)", "asyncpg (>=0.24.0)", "ormar (>=0.10.5)", "Django (<3.3.0)", "piccolo (>=0.29,<0.35)", "motor (>=2.5.1,<3.0.0)", "mongoengine (>=0.23.1,<0.25.0)"]
 sqlalchemy = ["SQLAlchemy (>=1.3.20)"]
 asyncpg = ["SQLAlchemy (>=1.3.20)", "asyncpg (>=0.24.0)"]
@@ -286,6 +298,15 @@ databases = ["databases[postgresql,mysql,sqlite] (>=0.4.0)"]
 orm = ["databases[postgresql,mysql,sqlite] (>=0.4.0)", "orm (>=0.1.5)", "typesystem (>=0.2.0,<0.3.0)"]
 django = ["databases[postgresql,mysql,sqlite] (>=0.4.0)", "Django (<3.3.0)"]
 tortoise = ["tortoise-orm[asyncpg,aiomysql,aiosqlite] (>=0.16.18,<0.20.0)"]
+=======
+all = ["gino[starlette] (>=1.0.1)", "SQLAlchemy (>=1.3.20)", "databases[sqlite,mysql,postgresql] (>=0.4.0)", "orm (>=0.1.5)", "tortoise-orm[aiosqlite,aiomysql,asyncpg] (>=0.16.18,<0.18.0)", "asyncpg (>=0.24.0)", "ormar (>=0.10.5)", "Django (<3.3.0)", "piccolo (>=0.29,<0.35)", "motor (>=2.5.1,<3.0.0)"]
+sqlalchemy = ["SQLAlchemy (>=1.3.20)"]
+asyncpg = ["SQLAlchemy (>=1.3.20)", "asyncpg (>=0.24.0)"]
+databases = ["databases[sqlite,mysql,postgresql] (>=0.4.0)"]
+orm = ["databases[sqlite,mysql,postgresql] (>=0.4.0)", "orm (>=0.1.5)", "typesystem (>=0.2.0,<0.3.0)"]
+django = ["databases[sqlite,mysql,postgresql] (>=0.4.0)", "Django (<3.3.0)"]
+tortoise = ["tortoise-orm[aiosqlite,aiomysql,asyncpg] (>=0.16.18,<0.18.0)"]
+>>>>>>> 40bfdb9 (Current State)
 ormar = ["ormar (>=0.10.5)"]
 piccolo = ["piccolo (>=0.29,<0.35)"]
 motor = ["motor (>=2.5.1,<3.0.0)"]
@@ -505,7 +526,11 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [[package]]
 name = "platformdirs"
+<<<<<<< HEAD
 version = "2.5.2"
+=======
+version = "2.4.1"
+>>>>>>> 40bfdb9 (Current State)
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "dev"
 optional = false
@@ -1033,6 +1058,7 @@ atomicwrites = [
     {file = "atomicwrites-1.4.0.tar.gz", hash = "sha256:ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a"},
 ]
 attrs = [
+<<<<<<< HEAD
     {file = "attrs-21.4.0-py2.py3-none-any.whl", hash = "sha256:2d27e3784d7a565d36ab851fe94887c5eccd6a463168875832a1be79c82828b4"},
     {file = "attrs-21.4.0.tar.gz", hash = "sha256:626ba8234211db98e869df76230a137c4c40a12d72445c45d5f5b716f076e2fd"},
 ]
@@ -1047,6 +1073,10 @@ bcrypt = [
     {file = "bcrypt-3.2.0-cp36-abi3-win32.whl", hash = "sha256:a67fb841b35c28a59cebed05fbd3e80eea26e6d75851f0574a9273c80f3e9b55"},
     {file = "bcrypt-3.2.0-cp36-abi3-win_amd64.whl", hash = "sha256:81fec756feff5b6818ea7ab031205e1d323d8943d237303baca2c5f9c7846f34"},
     {file = "bcrypt-3.2.0.tar.gz", hash = "sha256:5b93c1726e50a93a033c36e5ca7fdcd29a5c7395af50a6892f5d9e7c6cfbfb29"},
+=======
+    {file = "attrs-21.3.0-py2.py3-none-any.whl", hash = "sha256:8f7335278dedd26b58c38e006338242cc0977f06d51579b2b8b87b9b33bff66c"},
+    {file = "attrs-21.3.0.tar.gz", hash = "sha256:50f3c9b216dc9021042f71b392859a773b904ce1a029077f58f6598272432045"},
+>>>>>>> 40bfdb9 (Current State)
 ]
 black = [
     {file = "black-22.3.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:2497f9c2386572e28921fa8bec7be3e51de6801f7459dffd6e62492531c47e09"},
@@ -1475,8 +1505,13 @@ pathspec = [
     {file = "pathspec-0.9.0.tar.gz", hash = "sha256:e564499435a2673d586f6b2130bb5b95f04a3ba06f81b8f895b651a3c76aabb1"},
 ]
 platformdirs = [
+<<<<<<< HEAD
     {file = "platformdirs-2.5.2-py3-none-any.whl", hash = "sha256:027d8e83a2d7de06bbac4e5ef7e023c02b863d7ea5d079477e722bb41ab25788"},
     {file = "platformdirs-2.5.2.tar.gz", hash = "sha256:58c8abb07dcb441e6ee4b11d8df0ac856038f944ab98b7be6b27b2a3c7feef19"},
+=======
+    {file = "platformdirs-2.4.1-py3-none-any.whl", hash = "sha256:1d7385c7db91728b83efd0ca99a5afb296cab9d0ed8313a45ed8ba17967ecfca"},
+    {file = "platformdirs-2.4.1.tar.gz", hash = "sha256:440633ddfebcc36264232365d7840a970e75e1018d15b4327d11f91909045fda"},
+>>>>>>> 40bfdb9 (Current State)
 ]
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
