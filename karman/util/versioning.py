@@ -16,7 +16,7 @@ def version(
     :param major: The major API version.
     :param minor: The minor API version.
     :param deprecated: Whether this endpoint is deprecated in this version of
-    the API. By default the deprecation value of the endpoint is used.
+    the API. By default, the deprecation value of the endpoint is used.
     """
 
     def decorator(func: CallableT) -> CallableT:

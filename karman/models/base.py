@@ -1,15 +1,22 @@
-__all__ = ["database", "metadata", "BaseMeta"]
+__all__ = ["BaseModel"]
 
-import databases
-import ormar
-import sqlalchemy
+from typing import TYPE_CHECKING
 
-from karman.config import settings
-
-database = databases.Database(settings.db_url)
-metadata = sqlalchemy.MetaData()
+from sqlalchemy import Column, Integer, MetaData
+from sqlalchemy.orm import as_declarative
 
 
-class BaseMeta(ormar.ModelMeta):
-    database = database
-    metadata = metadata
+@as_declarative()
+class BaseModel:
+    """
+    This is the base class for all database models. It is a SQLAlchemy declarative base.
+    The ``metadata`` of this class contains data about all tables used by the Karman
+    API.
+    """
+
+    if TYPE_CHECKING:
+        metadata: MetaData
+
+    __mapper_args__ = {"eager_defaults": True}
+
+    id: int = Column(Integer, primary_key=True)

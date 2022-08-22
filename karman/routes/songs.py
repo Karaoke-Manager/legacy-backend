@@ -9,7 +9,7 @@ from fastapi_pagination.limit_offset import Params
 from starlette.status import HTTP_204_NO_CONTENT, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 
 from karman import schemas
-from karman.versioning import version
+from karman.util.versioning import version
 
 router = APIRouter(
     tags=["Songs"],

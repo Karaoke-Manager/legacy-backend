@@ -54,9 +54,7 @@ profile = "black"
 
 [tool.mypy]
 files = ["karman", "tests"]
-# TODO: Enable when https://github.com/samuelcolvin/pydantic/pull/3175 is merged
-# plugins = ["pydantic.mypy"]
-plugins = ["sqlmypy"]
+plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 # Untyped definitions and calls
 disallow_untyped_defs = true
 # None and Optional handling
@@ -68,59 +66,65 @@ warn_return_any = true
 # Miscellaneous
 warn_unused_configs = true
 
+[[tool.mypy.overrides]]
+module = ["jose.*", "pytest", "_pytest", "_pytest.fixtures", "_pytest.monkeypatch"]
+ignore_missing_imports = true
+
 [tool.pydantic-mypy]
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "karman"]
+asyncio_mode = "auto"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-fastapi = "^0.70.1"
-fastapi-pagination = "^0.9.1"
+python = "^3.10"
+fastapi = "^0.75.2"
+fastapi-pagination = "^0.9.3"
 python-multipart = "^0.0.5"
-python-dotenv = "^0.19.2"
-orjson = "^3.6.5"
+python-dotenv = "^0.20.0"
+orjson = "^3.6.8"
 PyYAML = "^6.0"
+python-jose = { version = "^3.3.0", extras = ["cryptography"] }
+passlib = { version = "^1.7.4", extras = ["bcrypt"] }
 
 # ORM and Database Drivers
-ormar = "^0.10.23"
-alembic = "^1.7.5"
+sqlalchemy = { version = "^1.4.36", extras = ["asyncio", "mypy"] }
+alembic = "^1.7.7"
 asyncpg = { version = "^0.25.0", optional = true }
-psycopg2-binary = { version = "^2.9.2", optional = true }
-aiomysql = { version = "^0.0.22", optional = true }
-mysqlclient = { version = "^2.1.0", optional = true }
+aiomysql = { version = "^0.1.0", optional = true }
 aiosqlite = { version = "^0.17.0", optional = true }
 
 # Uvicorn Optional Dependency
-uvicorn = { version = "^0.16.0", optional = true, extras = ["standard"] }
+uvicorn = { version = "^0.17.6", optional = true, extras = ["standard"] }
 
 # Pytest Optional Dependency
-pytest = { version = "^6.2.5", optional = true }
+pytest = { version = "^7.1.1", optional = true }
+pytest-asyncio = { version = "^0.18.3", optional = true }
 pytest-cov = { version = "^3.0.0", optional = true }
 pytest-xdist = { version = "^2.5.0", optional = true }
-
+requests = { version = "^2.27.1", optional = true }
 
 [tool.poetry.dev-dependencies]
-poethepoet = "^0.11.0"
-uvicorn = { version = "^0.16.0", extras = ["standard"] }
-black = "^21.12b0"
+poethepoet = "^0.13.1"
+uvicorn = { version = "^0.17.6", extras = ["standard"] }
+black = "^22.3.0"
 isort = "^5.10.1"
 flake8 = "^4.0.1"
-flake8-black = "^0.2.3"
+flake8-black = "^0.3.2"
 flake8-isort = "^4.1.1"
 
-mypy = "^0.930"
-sqlalchemy-stubs = "^0.4"
+mypy = "^0.950"
 types-PyYAML = "^6.0.1"
+types-passlib = "^1.7.5"
 
 [tool.poetry.extras]
 uvicorn = ["uvicorn"]
-postgresql = ["asyncpg", "psycopg2-binary"]
-postgres = ["asyncpg", "psycopg2-binary"]
-mysql = ["aiomysql", "mysqlclient"]
+postgresql = ["asyncpg"]
+postgres = ["asyncpg"]
+mysql = ["aiomysql"]
 sqlite = ["aiosqlite"]
-tests = ["pytest", "pytest-cov", "pytest-xdist"]
+tests = ["pytest", "pytest-asyncio", "pytest-cov", "pytest-xdist", "requests"]
 
 [tool.poetry.build]
 generate-setup-file = false

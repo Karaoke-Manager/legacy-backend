@@ -4,7 +4,7 @@ version: 1
 
 formatters:
   default:
-    (): "karman.logging.ColorFormatter"
+    (): "karman.util.logging.ColorFormatter"
     fmt: "%(asctime)s | %(levelname)8s | %(name)s: %(message)s"
     color_fmt: "%(asctime)s | %(levelname)21s | %(name)s %(message)s"
     colors:
@@ -14,7 +14,7 @@ formatters:
     level_colors:
       50: {fg: bright_red, blink: true}
   access:
-    (): "karman.logging.AccessFormatter"
+    (): "karman.util.logging.AccessFormatter"
     fmt: "%(asctime)s | %(levelname)8s | %(client_addr)s %(method)s %(full_path)s HTTP/%(http_version)s -> %(status_code)s %(status_phrase)s"
     color_fmt: "%(asctime)s | %(levelname)21s | %(client_addr)s %(method)s %(full_path)s HTTP/%(http_version)s -> %(status_code)s %(status_phrase)s"
     colors:
